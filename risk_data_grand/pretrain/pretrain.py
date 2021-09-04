@@ -1,6 +1,5 @@
 # coding:utf-8
 import re
-import wandb
 from re import M
 import sys
 from packaging.version import parse
@@ -84,40 +83,46 @@ class LineByLineTextDataset(Dataset):
         print(f"Creating features from dataset file at {train_file_path}")
         batch_encoding = []
         input_ids = []
-        token_type_ids =[]
-        attetion_mask = []
         
         # 字典中数到id的映射关系是一一对应
-        vocab_map = {'[PAD]':40001,'[UNK]':40002,'[CLS]':40003,'[SEP]':40004,'[MASK]':40005,'？':40006,'！':40007,'。':40008,'，':40009}
+        vocab_map = {'[PAD]':40000,'[UNK]':40001,'[CLS]':40002,'[SEP]':40003,'[MASK]':40004,'？':40005,'！':40006,'。':40007,'，':40008}
         with open(train_file_path, encoding="utf-8") as f:
-            # isspace 用于判断一个字符串中的字符是否全是whitespace 
-            temp_input_ids = []            
-            for line in tqdm(f,total=500001):
+            # isspace 用于判断一个字符串中的字符是否全是whitespace                    
+            
+            for line in tqdm(f,total=500001):                
+                temp_input_ids = [0] * 300
+                temp_input_ids[0] = 40002
                 if len(line )>0 and not line.isspace():
                     line = line.strip("\n")                    
                     row = re.split(r'([，。？！ ])',line)
                     max_length = 300 # 最大长度
-                    cnt = 0
+                    cnt = 1
                     for i in row:
                         if i ==' ' or i =='':
                             continue
                         try :
-                            num = int(i) # 转为数字
+                            num = int(i) - 1 # 转为数字
                         except:
-                            num = vocab_map[i]   
-                        temp_input_ids.append(num) 
-                        if cnt > max_length:
-                            break
-                        cnt +=1
-            input_ids.append(temp_input_ids) # 放入到所有的当中
-            # train_lines = [line for line in f.read().splitlines() if (len(line) > 0 and not line.isspace())]
+                            num = vocab_map[i]
 
-        # 不能在这里是tokenizer，否则很费时间
-        # batch_encoding = tokenizer(train_lines, add_special_tokens=True, truncation=True, max_length=block_size)
+                        temp_input_ids[cnt] = num
+                        if cnt >= max_length - 1:
+                            break
+                        cnt +=1                
+                temp_input_ids[-1] = 40003
+                if (len (temp_input_ids)==300):                    
+                    input_ids.append(temp_input_ids) # 放入到所有的当中
+
+            
+        # with open(train_file_path, encoding="utf-8") as f:
+        #     train_lines = [line for line in f.read().splitlines() if (len(line) > 0 and not line.isspace())]
+        # # 不能在这里是tokenizer，否则很费时间
+        # # batch_encoding = tokenizer(train_lines, add_special_tokens=True, truncation=True, max_length=block_size)
+        # batch_encoding = tokenizer(train_lines, truncation=True, max_length=block_size,padding='max_length')
 
         self.examples = input_ids
+        # self.examples = batch_encoding['input_ids']
         self.examples = [{"input_ids": torch.tensor(e, dtype=torch.long)} for e in self.examples]
-        
 
     def __len__(self):
         return len(self.examples)
@@ -142,8 +147,8 @@ def main():
     parser.add_argument("--manual_seed", default=123456, type=int,help='seed num')
     parser.add_argument("--train_fgm", default=False,type=boolean_string)
     parser.add_argument("--fgm_epsilon", default=1.0)
-    parser.add_argument("--batch_size", default=8,type=int)
-    parser.add_argument("--num_epochs",default=100,type=int)
+    parser.add_argument("--batch_size", default=10,type=int)
+    parser.add_argument("--num_epochs",default=150,type=int)
     parser.add_argument("--gradient_accumulation_steps", default=2,type=int)
     parser.add_argument("--train_data_path", default='/home/lawson/program/daguan/risk_data_grand/data/pretrain_train.txt',type=str)    
     parser.add_argument("--test_data_path", default='/home/lawson/program/daguan/risk_data_grand/data/pretrain_test.txt',type=str)    
@@ -183,6 +188,7 @@ def main():
     config.data_cache_path = '../user_data/pretrain/'+config.model_type+'/data.pkl'
 
     model_path = '/home/lawson/program/daguan/' + model_name + '/pytorch_model.bin'
+    # model_path = "/home/lawson/program/daguan/pretrain_model/bert-base-fgm/final/pytorch_model.bin"
     config_path = '/home/lawson/program/daguan/' + model_name + '/config.json'    
     vocab_file = '/home/lawson/program/daguan/' + model_name + '/vocab.txt'
     # vocab_file = '/home/lawson/program/daguan/pretrain_modelnezha-base-count5/pretrain/nezha_model/vocab.txt'
@@ -214,7 +220,7 @@ def main():
         model_config = BertConfig.from_pretrained(config_path)
         # 下面这种方式就是随机初始化的
         model = BertForMaskedLM(config=model_config)
-
+        # model = BertForMaskedLM.from_pretrained("/home/lawson/program/daguan/pretrain_model/bert-base-fgm/final")
         # model = BertForMaskedLM.from_pretrained(pretrained_model_name_or_path=model_path,
         #                                          config=model_config)
 
@@ -256,7 +262,7 @@ def main():
     
     trainer.train()
     trainer.save_model(model_save_path)
-    tokenizer.save_pretrained(model_save_path)
+    # tokenizer.save_pretrained(model_save_path)
         # if config.model_type == 'bert':
         #     model = BertForMaskedLM.from_pretrained(pretrained_model_name_or_path=model_save_path + "pytorch_model.bin",
         #                                             config=model_config)        

@@ -651,7 +651,7 @@ class Trainer:
         # Multi-gpu training (should be after apex fp16 initialization)
         if self.args.n_gpu > 1:
             # 是这里让模型可以放到三个GPU上训练
-            model = torch.nn.DataParallel(model,device_ids=[0, 2])
+            model = torch.nn.DataParallel(model,device_ids=[0, 1])
 
         if not training:
             return model
