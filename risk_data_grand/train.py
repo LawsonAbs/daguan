@@ -1,5 +1,8 @@
+import os
+
 from visdom import Visdom
 import os
+os.environ["CUDA_VISIBLE_DEVICES"]="1"
 import json
 import time
 import pickle
@@ -341,7 +344,7 @@ def main():
         'normal_data_cache_path': 'user_data/processed/nezha/all_data.pkl',  # 保存训练数据 下次加载更快
         'data_path': '/home/lawson/program/daguan/risk_data_grand/data/train.txt', # 训练数据
         'output_path': '/home/lawson/program/daguan/risk_data_grand/model', # fine-tuning后保存模型的路径
-        'model_path': '/home/lawson/program/daguan/pretrain_model/bert-base-fgm/final_whole', # your pretrain model path
+        'model_path': '/home/lawson/program/daguan/pretrain_model/bert-base-fgm/checkpoint-24000', # your pretrain model path
         'shuffle_way': '',  # block_shuffle 还是 random shuffle
         'use_swa': True, # 目前没有用到
         'tokenizer_fast': False, 
