@@ -1,0 +1,44 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "train",
+            "type": "python",
+            "request": "launch",
+            "program": "risk_data_grand/train.py",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "predict",
+            "type": "python",
+            "request": "launch",
+            "program": "risk_data_grand/predict.py",
+            "console": "integratedTerminal"
+        },        
+        {
+            "name": "process_data",
+            "type": "python",
+            "request": "launch",
+            "program": "risk_data_grand/data/process_data.py",
+            "console": "integratedTerminal"
+        },        
+        {
+            "name": "test",
+            "type": "python",
+            "request": "launch",
+            "program": "risk_data_grand/utils/test.py",
+            "console": "integratedTerminal"
+        },        
+        {
+            "name": "pretrain",
+            "type": "python",
+            "request": "launch",
+            "program": "risk_data_grand/pretrain/pretrain.py",
+            "console": "integratedTerminal",
+            "args": [
+                
+            ]
+        }
+
+    ]
+}
