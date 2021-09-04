@@ -651,7 +651,7 @@ class Trainer:
         # Multi-gpu training (should be after apex fp16 initialization)
         if self.args.n_gpu > 1:
             # 是这里让模型可以放到三个GPU上训练
-            model = torch.nn.DataParallel(model,device_ids=[0, 1])
+            model = torch.nn.DataParallel(model,device_ids=[0, 2])
 
         if not training:
             return model
@@ -988,8 +988,8 @@ class Trainer:
                     break
             
             # 因为这里
-            viz.line([epoch_loss],[global_step],win="loss",update='append')
-            print(f"epoch = {epoch},cur_batch_loss = {epoch_loss}")
+            viz.line([epoch_loss.item()],[global_step],win="loss",update='append')
+            print(f"epoch = {epoch},cur_epoch_loss = {epoch_loss}")
             self.control = self.callback_handler.on_epoch_end(self.args, self.state, self.control)
 
 

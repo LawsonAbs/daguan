@@ -34,7 +34,7 @@ class NeZhaSequenceClassification(BertPreTrainedModel):
     def __init__(self, config):
         super().__init__(config)
         self.num_labels = 35
-        self.bert = NeZhaModel(config) # TODO 这里？？
+        self.bert = BertModel(config) 
         self.classifier = nn.Linear(config.hidden_size, self.num_labels)
         self.init_weights()
         self.multi_drop = 5
@@ -313,6 +313,8 @@ def build_model_and_tokenizer(config):
         tokenizer = BertTokenizer.from_pretrained(tokenizer_path)
     if config['use_model'] == 'nezha':
         model = NeZhaSequenceClassification.from_pretrained(config['model_path'])
+    # if config['use_model'] == 'bert':
+    #     model = BertModel.from_pretrained(config['model_path'])
     return tokenizer, model
 
 
@@ -339,7 +341,7 @@ def main():
         'normal_data_cache_path': 'user_data/processed/nezha/all_data.pkl',  # 保存训练数据 下次加载更快
         'data_path': '/home/lawson/program/daguan/risk_data_grand/data/train.txt', # 训练数据
         'output_path': '/home/lawson/program/daguan/risk_data_grand/model', # fine-tuning后保存模型的路径
-        'model_path': '/home/lawson/program/daguan/bert-base-fgm', # your pretrain model path
+        'model_path': '/home/lawson/program/daguan/pretrain_model/bert-base-fgm/final_whole', # your pretrain model path
         'shuffle_way': '',  # block_shuffle 还是 random shuffle
         'use_swa': True, # 目前没有用到
         'tokenizer_fast': False, 

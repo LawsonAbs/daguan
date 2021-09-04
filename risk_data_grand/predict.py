@@ -14,7 +14,7 @@ import torch.nn as nn
 from transformers import BertTokenizer
 
 from modeling.modeling_nezha.modeling import NeZhaPreTrainedModel, NeZhaModel
-from modeling.bert.modeling_bert import BertModel, BertPreTrainedModel
+from modeling.bert.modeling_bert import BertForMaskedLM, BertModel, BertPreTrainedModel
 #from model_utils.ensemble_model import EnsembleModel
 
 label_dict = {'5-24': 0, '6-34': 1, '1-1': 2, '6-8': 3, '10-26': 4, '2-3': 5, '5-22': 6, '6-28': 7, '8-18': 8, '1-4': 9, '2-6': 10, '6-21': 11, 
@@ -27,7 +27,7 @@ class NeZhaSequenceClassification(BertPreTrainedModel):
     def __init__(self, config):
         super().__init__(config)
         self.num_labels = 35
-        self.bert = NeZhaModel(config)
+        self.bert = BertModel(config)
         self.classifier = nn.Linear(config.hidden_size, self.num_labels)
         self.init_weights()
         self.multi_drop = 5
@@ -52,6 +52,7 @@ class NeZhaSequenceClassification(BertPreTrainedModel):
         )
 
         pooled_output = outputs[1]
+        # pooled_output = outputs.logits
         logits = self.classifier(pooled_output)
         for j, dropout in enumerate(self.multi_dropouts):
             if j == 0:
@@ -177,12 +178,12 @@ def predict(dataset, pre_model, config):
 
 def main():
     config = {
-        'model_type': 'nezha-base-fgm', # 加载模型文件夹
+        'model_type': 'bert-base-fgm', # 加载模型文件夹
         'output_logit_path': 'output_result/nezha',
         'normal_data_cache_path': '',
         'normal_r_data_cache_path': '',
         'vocab_path': '',
-        'init_model_path': '', #TODO 这个参数在predict 里是多余的
+        'init_model_path': '/home/lawson/program/daguan/bert-base-fgm', 
         # 'origin_test_path': '/home/lawson/program/daguan/risk_data_grand/data/datagrand_2021_test.csv',
         'test_path': '/home/lawson/program/daguan/risk_data_grand/data/test.txt', # 测试数据
         'load_model_path': '/home/lawson/program/daguan/risk_data_grand/model/checkpoint-35030', # 加载训练后的模型
@@ -200,7 +201,7 @@ def main():
     print(">> program start at:{}".format(localtime_start))
 
     config['vocab_path'] = '/home/lawson/program/daguan/risk_data_grand/' + config['model_type'] + '/vocab.txt'
-    config['init_model_path'] = '/home/lawson/program/daguan/risk_data_grand/' + config['model_type']
+    config['init_model_path'] = '/home/lawson/program/daguan/' + config['model_type']
     config['normal_data_cache_path'] = 'user_data/processed/' + config['model_type'] + '/test_data.pkl'
     
     if not os.path.exists(config['normal_data_cache_path']):
@@ -220,6 +221,7 @@ def main():
     print('>> load model: ',config['load_model_path'])
     
     model = NeZhaSequenceClassification.from_pretrained(config['load_model_path'])
+    # model = BertForMaskedLM.from_pretrained(config['load_model_path'])
     model.to(config['device'])
     model.eval()
 
