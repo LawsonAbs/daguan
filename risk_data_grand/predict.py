@@ -186,7 +186,7 @@ def main():
         'init_model_path': '/home/lawson/program/daguan/bert-base-fgm', 
         # 'origin_test_path': '/home/lawson/program/daguan/risk_data_grand/data/datagrand_2021_test.csv',
         'test_path': '/home/lawson/program/daguan/risk_data_grand/data/test.txt', # 测试数据
-        'load_model_path': '/home/lawson/program/daguan/risk_data_grand/model/checkpoint-35030', # 加载训练后的模型
+        'load_model_path': '/home/lawson/program/daguan/risk_data_grand/model/checkpoint-10509', # 加载训练后的模型
         'output_txt_path': '/home/lawson/program/daguan/risk_data_grand/output_result/',
         'output_txt_name': 'predict.csv',
         'submit_path': 'submission.csv', # 提交结果的文件名
