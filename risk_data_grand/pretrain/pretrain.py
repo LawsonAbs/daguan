@@ -85,43 +85,43 @@ class LineByLineTextDataset(Dataset):
         input_ids = []
         
         # 字典中数到id的映射关系是一一对应
-        vocab_map = {'[PAD]':40000,'[UNK]':40001,'[CLS]':40002,'[SEP]':40003,'[MASK]':40004,'？':40005,'！':40006,'。':40007,'，':40008}
-        with open(train_file_path, encoding="utf-8") as f:
-            # isspace 用于判断一个字符串中的字符是否全是whitespace                    
-            
-            for line in tqdm(f,total=500001):                
-                temp_input_ids = [0] * 300
-                temp_input_ids[0] = 40002
-                if len(line )>0 and not line.isspace():
-                    line = line.strip("\n")                    
-                    row = re.split(r'([，。？！ ])',line)
-                    max_length = 300 # 最大长度
-                    cnt = 1
-                    for i in row:
-                        if i ==' ' or i =='':
-                            continue
-                        try :
-                            num = int(i) - 1 # 转为数字
-                        except:
-                            num = vocab_map[i]
-
-                        temp_input_ids[cnt] = num
-                        if cnt >= max_length - 1:
-                            break
-                        cnt +=1                
-                temp_input_ids[-1] = 40003
-                if (len (temp_input_ids)==300):                    
-                    input_ids.append(temp_input_ids) # 放入到所有的当中
-
-            
+        # vocab_map = {'[PAD]':40000,'[UNK]':40001,'[CLS]':40002,'[SEP]':40003,'[MASK]':40004,'？':40005,'！':40006,'。':40007,'，':40008}
         # with open(train_file_path, encoding="utf-8") as f:
-        #     train_lines = [line for line in f.read().splitlines() if (len(line) > 0 and not line.isspace())]
-        # # 不能在这里是tokenizer，否则很费时间
-        # # batch_encoding = tokenizer(train_lines, add_special_tokens=True, truncation=True, max_length=block_size)
-        # batch_encoding = tokenizer(train_lines, truncation=True, max_length=block_size,padding='max_length')
+        #     # isspace 用于判断一个字符串中的字符是否全是whitespace                    
+            
+        #     for line in tqdm(f,total=500001):                
+        #         temp_input_ids = [0] * 300
+        #         temp_input_ids[0] = 40002
+        #         if len(line )>0 and not line.isspace():
+        #             line = line.strip("\n")                    
+        #             row = re.split(r'([，。？！ ])',line)
+        #             max_length = 300 # 最大长度
+        #             cnt = 1
+        #             for i in row:
+        #                 if i ==' ' or i =='':
+        #                     continue
+        #                 try :
+        #                     num = int(i) - 1 # 转为数字
+        #                 except:
+        #                     num = vocab_map[i]
 
-        self.examples = input_ids
-        # self.examples = batch_encoding['input_ids']
+        #                 temp_input_ids[cnt] = num
+        #                 if cnt >= max_length - 1:
+        #                     break
+        #                 cnt +=1                
+        #         temp_input_ids[-1] = 40003
+        #         if (len (temp_input_ids)==300):                    
+        #             input_ids.append(temp_input_ids) # 放入到所有的当中
+
+            
+        with open(train_file_path, encoding="utf-8") as f:
+            train_lines = [line for line in f.read().splitlines() if (len(line) > 0 and not line.isspace())]
+        # 不能在这里是tokenizer，否则很费时间
+        # batch_encoding = tokenizer(train_lines, add_special_tokens=True, truncation=True, max_length=block_size)
+        batch_encoding = tokenizer(train_lines, truncation=True, max_length=block_size,padding='max_length')
+
+        # self.examples = input_ids
+        self.examples = batch_encoding['input_ids']
         self.examples = [{"input_ids": torch.tensor(e, dtype=torch.long)} for e in self.examples]
 
     def __len__(self):
@@ -219,10 +219,10 @@ def main():
     if config.model_type == 'bert':
         model_config = BertConfig.from_pretrained(config_path)
         # 下面这种方式就是随机初始化的
-        model = BertForMaskedLM(config=model_config)
+        # model = BertForMaskedLM(config=model_config)
         # model = BertForMaskedLM.from_pretrained("/home/lawson/program/daguan/pretrain_model/bert-base-fgm/final")
-        # model = BertForMaskedLM.from_pretrained(pretrained_model_name_or_path=model_path,
-        #                                          config=model_config)
+        model = BertForMaskedLM.from_pretrained(pretrained_model_name_or_path=model_path,
+                                                 config=model_config)
 
     if use_fgm:
         print('进行fgm预训练')
@@ -244,7 +244,7 @@ def main():
         )
 
     # 遍历所有文件    
-    train_file_path = "/home/lawson/program/daguan/risk_data_grand/data/small_json/1.txt"
+    train_file_path = "/home/lawson/program/daguan/risk_data_grand/data/small_json/0.txt"
     # dataset = Dataset( )
     dataset = LineByLineTextDataset(tokenizer=tokenizer,
                                     train_file_path=train_file_path,                                        
