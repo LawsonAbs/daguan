@@ -83,37 +83,39 @@ class LineByLineTextDataset(Dataset):
         print(f"Creating features from dataset file at {train_file_path}")
         batch_encoding = []
         input_ids = []
-        
-        # 字典中数到id的映射关系是一一对应
-        # vocab_map = {'[PAD]':40000,'[UNK]':40001,'[CLS]':40002,'[SEP]':40003,'[MASK]':40004,'？':40005,'！':40006,'。':40007,'，':40008}
-        # with open(train_file_path, encoding="utf-8") as f:
-        #     # isspace 用于判断一个字符串中的字符是否全是whitespace                    
-            
-        #     for line in tqdm(f,total=500001):                
-        #         temp_input_ids = [0] * 300
-        #         temp_input_ids[0] = 40002
-        #         if len(line )>0 and not line.isspace():
-        #             line = line.strip("\n")                    
-        #             row = re.split(r'([，。？！ ])',line)
-        #             max_length = 300 # 最大长度
-        #             cnt = 1
-        #             for i in row:
-        #                 if i ==' ' or i =='':
-        #                     continue
-        #                 try :
-        #                     num = int(i) - 1 # 转为数字
-        #                 except:
-        #                     num = vocab_map[i]
+        vocab_path = "/home/lawson/program/daguan/bert-base-fgm/vocab.txt"
+        vocab_map = {} # word => id
+        index = 0
+        # 写一个获取vocab映射的
+        with open(vocab_path, 'r', encoding='utf-8') as f1:
+            for line in f1:            
+                line = line.strip("\n")
+                vocab_map[line] = index
+                index += 1
 
-        #                 temp_input_ids[cnt] = num
-        #                 if cnt >= max_length - 1:
-        #                     break
-        #                 cnt +=1                
-        #         temp_input_ids[-1] = 40003
-        #         if (len (temp_input_ids)==300):                    
-        #             input_ids.append(temp_input_ids) # 放入到所有的当中
-
+        # 字典中数到id的映射关系是一一对应        
+        with open(train_file_path, encoding="utf-8") as f:
+            # isspace 用于判断一个字符串中的字符是否全是whitespace                    
             
+            for line in tqdm(f,total=500001):                
+                temp_input_ids = [0] * 300
+                temp_input_ids[0] = 2
+                if len(line )>0 and not line.isspace():
+                    line = line.strip("\n")                    
+                    row = re.split(r'([，。？！ ])',line)
+                    max_length = 300 # 最大长度
+                    cnt = 1
+                    for i in row:
+                        if i ==' ' or i =='':
+                            continue
+                        temp_input_ids[cnt] = vocab_map[i]
+                        if cnt >= max_length - 1:
+                            break
+                        cnt +=1                
+                temp_input_ids[-1] = 3
+                if (len (temp_input_ids)==300):                    
+                    input_ids.append(temp_input_ids) # 放入到所有的当中
+
         with open(train_file_path, encoding="utf-8") as f:
             train_lines = [line for line in f.read().splitlines() if (len(line) > 0 and not line.isspace())]
         # 不能在这里是tokenizer，否则很费时间
