@@ -31,7 +31,7 @@ from modeling.modeling_nezha.modeling import NeZhaPreTrainedModel, NeZhaModel
 from modeling.bert.modeling_bert import BertModel, BertPreTrainedModel
 from sparse_max.sparsemax import SparsemaxLoss
 # os.environ['CUDA_VISIBLE_DEVICES'] = '3'
-
+from sklearn.model_selection import StratifiedKFold,KFold
 
 class NeZhaSequenceClassification(BertPreTrainedModel):
     def __init__(self, config):
