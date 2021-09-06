@@ -150,7 +150,7 @@ def main():
     parser.add_argument("--train_fgm", default=False,type=boolean_string)
     parser.add_argument("--fgm_epsilon", default=1.0)
     parser.add_argument("--batch_size", default=10,type=int)
-    parser.add_argument("--num_epochs",default=150,type=int)
+    parser.add_argument("--num_epochs",default=100,type=int)
     parser.add_argument("--gradient_accumulation_steps", default=2,type=int)
     parser.add_argument("--train_data_path", default='/home/lawson/program/daguan/risk_data_grand/data/pretrain_train.txt',type=str)    
     parser.add_argument("--test_data_path", default='/home/lawson/program/daguan/risk_data_grand/data/pretrain_test.txt',type=str)    
