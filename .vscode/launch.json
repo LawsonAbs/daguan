@@ -38,6 +38,16 @@
             "args": [
                 
             ]
+        },        
+        {
+            "name": "tf-idf",
+            "type": "python",
+            "request": "launch",
+            "program": "ml/tf_idf.py",
+            "console": "integratedTerminal",
+            "args": [
+                
+            ]
         }
 
     ]
