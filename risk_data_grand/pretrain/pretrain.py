@@ -87,34 +87,34 @@ class LineByLineTextDataset(Dataset):
         vocab_map = {} # word => id
         index = 0
         # 写一个获取vocab映射的
-        with open(vocab_path, 'r', encoding='utf-8') as f1:
-            for line in f1:            
-                line = line.strip("\n")
-                vocab_map[line] = index
-                index += 1
+        # with open(vocab_path, 'r', encoding='utf-8') as f1:
+        #     for line in f1:            
+        #         line = line.strip("\n")
+        #         vocab_map[line] = index
+        #         index += 1
 
         # 字典中数到id的映射关系是一一对应        
-        with open(train_file_path, encoding="utf-8") as f:
-            # isspace 用于判断一个字符串中的字符是否全是whitespace                    
+        # with open(train_file_path, encoding="utf-8") as f:
+        #     # isspace 用于判断一个字符串中的字符是否全是whitespace                    
             
-            for line in tqdm(f,total=500001):                
-                temp_input_ids = [0] * 300
-                temp_input_ids[0] = 2
-                if len(line )>0 and not line.isspace():
-                    line = line.strip("\n")                    
-                    row = re.split(r'([，。？！ ])',line)
-                    max_length = 300 # 最大长度
-                    cnt = 1
-                    for i in row:
-                        if i ==' ' or i =='':
-                            continue
-                        temp_input_ids[cnt] = vocab_map[i]
-                        if cnt >= max_length - 1:
-                            break
-                        cnt +=1                
-                temp_input_ids[-1] = 3
-                if (len (temp_input_ids)==300):                    
-                    input_ids.append(temp_input_ids) # 放入到所有的当中
+        #     for line in tqdm(f,total=500001):                
+        #         temp_input_ids = [0] * 300
+        #         temp_input_ids[0] = 2
+        #         if len(line )>0 and not line.isspace():
+        #             line = line.strip("\n")                    
+        #             row = re.split(r'([，。？！ ])',line)
+        #             max_length = 300 # 最大长度
+        #             cnt = 1
+        #             for i in row:
+        #                 if i ==' ' or i =='':
+        #                     continue
+        #                 temp_input_ids[cnt] = vocab_map[i]
+        #                 if cnt >= max_length - 1:
+        #                     break
+        #                 cnt +=1                
+        #         temp_input_ids[-1] = 3
+        #         if (len (temp_input_ids)==300):                    
+        #             input_ids.append(temp_input_ids) # 放入到所有的当中
 
         with open(train_file_path, encoding="utf-8") as f:
             train_lines = [line for line in f.read().splitlines() if (len(line) > 0 and not line.isspace())]
@@ -189,7 +189,8 @@ def main():
     #     model_name = 'uer/bert-base'
     config.data_cache_path = '../user_data/pretrain/'+config.model_type+'/data.pkl'
 
-    model_path = '/home/lawson/program/daguan/' + model_name + '/pytorch_model.bin'
+    # model_path = '/home/lawson/program/daguan/' + model_name + '/pytorch_model.bin'
+    model_path = "/home/lawson/program/daguan/pretrain_model/bert-base-fgm/checkpoint-37000_2.4/pytorch_model.bin"
     # model_path = "/home/lawson/program/daguan/pretrain_model/bert-base-fgm/final/pytorch_model.bin"
     config_path = '/home/lawson/program/daguan/' + model_name + '/config.json'    
     vocab_file = '/home/lawson/program/daguan/' + model_name + '/vocab.txt'
@@ -246,7 +247,7 @@ def main():
         )
 
     # 遍历所有文件    
-    train_file_path = "/home/lawson/program/daguan/risk_data_grand/data/small_json/0.txt"
+    train_file_path = "/home/lawson/program/daguan/risk_data_grand/data/small_json/20.txt"
     # dataset = Dataset( )
     dataset = LineByLineTextDataset(tokenizer=tokenizer,
                                     train_file_path=train_file_path,                                        
