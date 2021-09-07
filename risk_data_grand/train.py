@@ -359,7 +359,7 @@ def main():
         'use_swa': True, # 目前没有用到
         'tokenizer_fast': False, 
         'batch_size': 4,  
-        'num_epochs': 1,
+        'num_epochs': 10,
         'max_seq_len': 300,
         'learning_rate': 2e-50,
         'alpha': 0.3,  # PGD的alpha参数设置 
