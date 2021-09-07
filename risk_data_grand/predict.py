@@ -187,7 +187,7 @@ def main():
         'init_model_path': '/home/lawson/program/daguan/bert-base-fgm', 
         # 'origin_test_path': '/home/lawson/program/daguan/risk_data_grand/data/datagrand_2021_test.csv',
         'test_path': '/home/lawson/program/daguan/risk_data_grand/data/test.txt', # 测试数据
-        'load_model_path': '/home/lawson/program/daguan/risk_data_grand/model/checkpoint-35030', # 加载训练后的模型
+        'load_model_path': '/home/lawson/program/daguan/risk_data_grand/model/checkpoint-0.69077_last_epoch', # 加载训练后的模型
         'output_txt_path': '/home/lawson/program/daguan/risk_data_grand/output_result/',
         'output_txt_name': 'predict.csv',
         'submit_path': 'submission.csv', # 提交结果的文件名
@@ -201,7 +201,7 @@ def main():
     localtime_start = time.asctime(time.localtime(time.time()))
     print(">> program start at:{}".format(localtime_start))
 
-    config['vocab_path'] = '/home/lawson/program/daguan/risk_data_grand/' + config['model_type'] + '/vocab.txt'
+    # config['vocab_path'] = '/home/lawson/program/daguan/risk_data_grand/' + config['model_type'] + '/vocab.txt'
     config['init_model_path'] = '/home/lawson/program/daguan/' + config['model_type']
     config['normal_data_cache_path'] = 'user_data/processed/' + config['model_type'] + '/test_data.pkl'
     
