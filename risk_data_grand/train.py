@@ -3,7 +3,7 @@ import sys
 from sklearn.metrics import f1_score
 from visdom import Visdom
 import os
-# os.environ["CUDA_VISIBLE_DEVICES"]="1"
+os.environ["CUDA_VISIBLE_DEVICES"]="1"
 import json
 import time
 import pickle
@@ -354,8 +354,8 @@ def main():
         'normal_data_cache_path': 'user_data/processed/nezha/all_data.pkl',  # 保存训练数据 下次加载更快
         'data_path': '/home/lawson/program/daguan/risk_data_grand/data/train.txt', # 训练数据
         'output_path': '/home/lawson/program/daguan/risk_data_grand/model', # fine-tuning后保存模型的路径
-        'model_path': '/home/lawson/program/daguan/pretrain_model/bert-base-fgm/2.4+2.4_checkpoint-12000', # your pretrain model path
-        # 'model_path': '/home/lawson/program/daguan/risk_data_grand/model/best', # your pretrain model path
+        # 'model_path': '/home/lawson/program/daguan/pretrain_model/bert-base-fgm/2.4+2.4_checkpoint-12000', # your pretrain model path
+        'model_path': '/home/lawson/program/daguan/risk_data_grand/model/best', # your pretrain model path
         'shuffle_way': '',  # block_shuffle 还是 random shuffle
         'use_swa': True, # 目前没有用到
         'tokenizer_fast': False, 
@@ -433,8 +433,8 @@ def main():
     skf = StratifiedKFold(n_splits=config['fold'],shuffle=True,random_state=config['seed'])
     kfold_dataset = np.array(kfold_dataset)
     tgt_numpy = np.array(tgt)
-    # 分割得到的结果是[X_train,y_train]为一对，
-    X_train,X_test,y_train,y_test = train_test_split(kfold_dataset,tgt_numpy,test_size=0.15)
+    # 分割得到的结果是[X_train,y_train]为一对，为了方便前后对比，这里使用了一个random_state 保持每次划分一致
+    X_train,X_test,y_train,y_test = train_test_split(kfold_dataset,tgt_numpy,test_size=0.15,random_state=22)
 
     
     # train
