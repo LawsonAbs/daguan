@@ -156,10 +156,10 @@ def read_dataset(config, tokenizer):
             dataset.append((src, tgt, seg, mask))
     
     data_cache_path = config['normal_data_cache_path']
-    if not os.path.exists(os.path.dirname(data_cache_path)):
-        os.makedirs(os.path.dirname(data_cache_path))
-    with open(data_cache_path, 'wb') as f:
-        pickle.dump(dataset, f)
+    # if not os.path.exists(os.path.dirname(data_cache_path)):
+    #     os.makedirs(os.path.dirname(data_cache_path))
+    # with open(data_cache_path, 'wb') as f:
+    #     pickle.dump(dataset, f)
     
     print("\n>> loading sentences from {},Time cost:{:.2f}".
           format(config['data_path'], ((time.time() - start) / 60.00)))
@@ -354,12 +354,12 @@ def main():
         'normal_data_cache_path': 'user_data/processed/nezha/all_data.pkl',  # 保存训练数据 下次加载更快
         'data_path': '/home/lawson/program/daguan/risk_data_grand/data/train.txt', # 训练数据
         'output_path': '/home/lawson/program/daguan/risk_data_grand/model', # fine-tuning后保存模型的路径
-        # 'model_path': '/home/lawson/program/daguan/pretrain_model/bert-base-fgm/2.4+2.4_checkpoint-12000', # your pretrain model path
-        'model_path': '/home/lawson/program/daguan/risk_data_grand/model/best', # your pretrain model path
+        'model_path': '/home/lawson/pretrain/chinese-roberta-wwm-ext-large', # your pretrain model path => 使用large
+        # 'model_path': '/home/lawson/program/daguan/risk_data_grand/model/best', # your pretrain model path
         'shuffle_way': '',  # block_shuffle 还是 random shuffle
         'use_swa': True, # 目前没有用到
         'tokenizer_fast': False, 
-        'batch_size': 4,  
+        'batch_size': 2,  
         'num_epochs': 10,
         'max_seq_len': 300,
         'learning_rate': 2e-5,
@@ -371,7 +371,7 @@ def main():
         'warmup_ratio': 0.1,
         'weight_decay': 0.01,
         'device': 'cuda',
-        'logging_step': 500, # 每1000步打印logger
+        'logging_step': 500, # 每500步打印logger
         'seed': 124525601, # 随机种子 
         'fold': 5 # k-flod   
         }

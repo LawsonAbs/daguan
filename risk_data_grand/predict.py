@@ -1,7 +1,7 @@
 # coding:utf-8
 
 import os
-os.environ['CUDA_VISIBLE_DEVICES']='1'
+os.environ['CUDA_VISIBLE_DEVICES']='2'
 import csv
 import json
 import time
@@ -115,7 +115,7 @@ class LabelSmoothingLoss(nn.Module):
 
 def read_dataset(config):
     start = time.time()
-    tokenizer = BertTokenizer.from_pretrained(config['init_model_path'])
+    tokenizer = BertTokenizer.from_pretrained(config['load_model_path'])
     dataset, r_dataset = [], []
     seq_length = config['max_seq_len']
 
@@ -179,17 +179,10 @@ def predict(dataset, pre_model, config):
 
 def main():
     config = {
-        'model_type': 'bert-base-fgm', # 加载模型文件夹
-        'output_logit_path': 'output_result/nezha',
-        'normal_data_cache_path': '',
-        'normal_r_data_cache_path': '',
-        'vocab_path': '',
-        'init_model_path': '/home/lawson/program/daguan/bert-base-fgm', 
-        # 'origin_test_path': '/home/lawson/program/daguan/risk_data_grand/data/datagrand_2021_test.csv',
+        'model_type': 'bert-base-fgm', # 加载模型文件夹                
+        'vocab_path': '/home/lawson/program/daguan/risk_data_grand/model/best/vocab.txt',
         'test_path': '/home/lawson/program/daguan/risk_data_grand/data/test.txt', # 测试数据
-        'load_model_path': '/home/lawson/program/daguan/risk_data_grand/model/best', # 加载训练后的模型
-        'output_txt_path': '/home/lawson/program/daguan/risk_data_grand/output_result/',
-        'output_txt_name': 'predict.csv',
+        'load_model_path': '/home/lawson/program/daguan/risk_data_grand/model/best', # 加载训练后的模型        
         'submit_path': 'submission.csv', # 提交结果的文件名
         'batch_size': 8,
         'max_seq_len': 300,
@@ -200,10 +193,8 @@ def main():
     start_time = time.time()
     localtime_start = time.asctime(time.localtime(time.time()))
     print(">> program start at:{}".format(localtime_start))
-
-    # config['vocab_path'] = '/home/lawson/program/daguan/risk_data_grand/' + config['model_type'] + '/vocab.txt'
-    config['init_model_path'] = '/home/lawson/program/daguan/' + config['model_type']
-    config['normal_data_cache_path'] = 'user_data/processed/' + config['model_type'] + '/test_data.pkl'
+        
+    config['normal_data_cache_path'] = '/home/lawson/program/daguan/user_data/processed/' + config['model_type'] + '/test_data.pkl'
     
     if not os.path.exists(config['normal_data_cache_path']):
         test_set = read_dataset(config)
@@ -218,7 +209,6 @@ def main():
     #     checkpoint, step = checkpoint_name.split('-')
     #     if int(step) > max_step:
     #         max_step= int(step)
-    # config['load_model_path'] = '/home/lawson/program/daguan/risk_data_grand/output_model/checkpoint-' + str(max_step)
     print('>> load model: ',config['load_model_path'])
     
     model = NeZhaSequenceClassification.from_pretrained(config['load_model_path'])

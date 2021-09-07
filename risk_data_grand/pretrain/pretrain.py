@@ -153,7 +153,7 @@ def main():
     parser.add_argument("--manual_seed", default=123456, type=int,help='seed num')
     parser.add_argument("--train_fgm", default=False,type=boolean_string)
     parser.add_argument("--fgm_epsilon", default=1.0)
-    parser.add_argument("--batch_size", default=10,type=int)
+    parser.add_argument("--batch_size", default=4,type=int)
     parser.add_argument("--num_epochs",default=100,type=int)
     parser.add_argument("--gradient_accumulation_steps", default=2,type=int)
     parser.add_argument("--train_data_path", default='/home/lawson/program/daguan/risk_data_grand/data/pretrain_train.txt',type=str)    
@@ -194,10 +194,10 @@ def main():
     config.data_cache_path = '../user_data/pretrain/'+config.model_type+'/data.pkl'
 
     # model_path = '/home/lawson/program/daguan/' + model_name + '/pytorch_model.bin'
-    model_path = "/home/lawson/program/daguan/pretrain_model/bert-base-fgm/checkpoint-37000_2.4/pytorch_model.bin"
+    model_path = "/home/lawson/pretrain/chinese-roberta-wwm-ext-large/pytorch_model.bin"
     # model_path = "/home/lawson/program/daguan/pretrain_model/bert-base-fgm/final/pytorch_model.bin"
-    config_path = '/home/lawson/program/daguan/' + model_name + '/config.json'    
-    vocab_file = '/home/lawson/program/daguan/' + model_name + '/vocab.txt'
+    config_path = '/home/lawson/pretrain/chinese-roberta-wwm-ext-large/config.json'    
+    vocab_file = '/home/lawson/pretrain/chinese-roberta-wwm-ext-large/vocab.txt'
     # vocab_file = '/home/lawson/program/daguan/pretrain_modelnezha-base-count5/pretrain/nezha_model/vocab.txt'
     
     tokenizer = BertTokenizer.from_pretrained(vocab_file)
@@ -251,7 +251,7 @@ def main():
         )
 
     # 遍历所有文件    
-    train_file_path = "/home/lawson/program/daguan/risk_data_grand/data/small_json/20.txt"
+    train_file_path = "/home/lawson/program/daguan/risk_data_grand/data/small_json/0.txt"
     # dataset = Dataset( )
     dataset = LineByLineTextDataset(tokenizer=tokenizer,
                                     train_file_path=train_file_path,                                        
