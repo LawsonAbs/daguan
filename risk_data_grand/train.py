@@ -1,8 +1,9 @@
+from sklearn.model_selection import train_test_split
 import sys
 from sklearn.metrics import f1_score
 from visdom import Visdom
 import os
-os.environ["CUDA_VISIBLE_DEVICES"]="1"
+# os.environ["CUDA_VISIBLE_DEVICES"]="1"
 import json
 import time
 import pickle
@@ -353,15 +354,15 @@ def main():
         'normal_data_cache_path': 'user_data/processed/nezha/all_data.pkl',  # 保存训练数据 下次加载更快
         'data_path': '/home/lawson/program/daguan/risk_data_grand/data/train.txt', # 训练数据
         'output_path': '/home/lawson/program/daguan/risk_data_grand/model', # fine-tuning后保存模型的路径
-        # 'model_path': '/home/lawson/program/daguan/pretrain_model/bert-base-fgm/best', # your pretrain model path
-        'model_path': '/home/lawson/program/daguan/risk_data_grand/model/best', # your pretrain model path
+        'model_path': '/home/lawson/program/daguan/pretrain_model/bert-base-fgm/2.4+2.4_checkpoint-12000', # your pretrain model path
+        # 'model_path': '/home/lawson/program/daguan/risk_data_grand/model/best', # your pretrain model path
         'shuffle_way': '',  # block_shuffle 还是 random shuffle
         'use_swa': True, # 目前没有用到
         'tokenizer_fast': False, 
         'batch_size': 4,  
-        'num_epochs': 1,
+        'num_epochs': 10,
         'max_seq_len': 300,
-        'learning_rate': 2e-50,
+        'learning_rate': 2e-5,
         'alpha': 0.3,  # PGD的alpha参数设置 
         'epsilon': 1.0, # FGM的epsilon参数设置 
         'adv_k': 3, # PGD的训练次数
@@ -432,142 +433,140 @@ def main():
     skf = StratifiedKFold(n_splits=config['fold'],shuffle=True,random_state=config['seed'])
     kfold_dataset = np.array(kfold_dataset)
     tgt_numpy = np.array(tgt)
-    for i,(train_idx,test_idx) in enumerate(skf.split(kfold_dataset,tgt_numpy)):
-        print(f">>>start {i} fold...")        
-        X_train, X_test = kfold_dataset[train_idx], kfold_dataset[test_idx]
-        y_train, y_test = tgt_numpy[train_idx], tgt_numpy[test_idx]
-        src = torch.LongTensor([example[0] for example in X_train])
-        seg = torch.LongTensor([example[1] for example in X_train])
-        mask = torch.LongTensor([example[2] for example in X_train])
-        tgt = torch.LongTensor(y_train)
-        
-        # eval
-        eval_src = torch.LongTensor([example[0] for example in X_test])
-        eval_seg = torch.LongTensor([example[1] for example in X_test])
-        eval_mask = torch.LongTensor([example[2] for example in X_test])
-        eval_tgt = torch.LongTensor(y_test)
-        output_path = os.path.join(config['output_path'], f'fold_{i}')
+    # 分割得到的结果是[X_train,y_train]为一对，
+    X_train,X_test,y_train,y_test = train_test_split(kfold_dataset,tgt_numpy,test_size=0.15)
 
-        for epoch in range(1, config['num_epochs'] + 1):
-            model.train()
-            avg_loss, avg_acc, avg_f1 = [], [], []
-            i = 1
+    
+    # train
+    src = torch.LongTensor([example[0] for example in X_train])
+    seg = torch.LongTensor([example[1] for example in X_train])
+    mask = torch.LongTensor([example[2] for example in X_train])
+    tgt = torch.LongTensor(y_train)
+    
+    # eval
+    eval_src = torch.LongTensor([example[0] for example in X_test])
+    eval_seg = torch.LongTensor([example[1] for example in X_test])
+    eval_mask = torch.LongTensor([example[2] for example in X_test])
+    eval_tgt = torch.LongTensor(y_test)    
 
-            # 开始训练
-            for (src_batch, tgt_batch, seg_batch, mask_batch) \
-                    in tqdm(batch_loader(config, src, tgt, seg, mask)):
+    for epoch in range(1, config['num_epochs'] + 1):
+        model.train()
+        avg_loss, avg_f1 = [], []
+        i = 1
 
-                # 先划分数据集
-                # train
-                src_batch = src_batch.to(config['device'])
-                tgt_batch = tgt_batch.to(config['device'])
-                seg_batch = seg_batch.to(config['device'])
-                mask_batch = mask_batch.to(config['device'])
+        # 开始训练
+        for (src_batch, tgt_batch, seg_batch, mask_batch) \
+                in tqdm(batch_loader(config, src, tgt, seg, mask)):
 
-                # lookahead.zero_grad()
-                output = model(input_ids=src_batch, labels=tgt_batch,
-                            token_type_ids=seg_batch, attention_mask=mask_batch)
-                loss = output[0]
+            # 先划分数据集
+            # train
+            src_batch = src_batch.to(config['device'])
+            tgt_batch = tgt_batch.to(config['device'])
+            seg_batch = seg_batch.to(config['device'])
+            mask_batch = mask_batch.to(config['device'])
 
-                optimizer.zero_grad()
-                loss.backward()
+            # lookahead.zero_grad()
+            output = model(input_ids=src_batch, labels=tgt_batch,
+                        token_type_ids=seg_batch, attention_mask=mask_batch)
+            loss = output[0]
 
-                total_loss += loss.item()
-                cur_avg_loss += loss.item()
+            optimizer.zero_grad()
+            loss.backward()
 
-                if config['adv'] == 'fgm':
-                    fgm = FGM(config, model)
-                    fgm.attack()
+            total_loss += loss.item()
+            cur_avg_loss += loss.item()
+
+            if config['adv'] == 'fgm':
+                fgm = FGM(config, model)
+                fgm.attack()
+                adv_loss = model(input_ids=src_batch, labels=tgt_batch,
+                                token_type_ids=seg_batch, attention_mask=mask_batch)[0]
+                adv_loss.backward()
+                fgm.restore()
+
+            if config['adv'] == 'pgd':
+                pgd = PGD(config, model)
+                K = config['adv_k']
+                pgd.backup_grad()
+                for t in range(K):
+                    pgd.attack(is_first_attack=(t == 0))
+                    if t != K - 1:
+                        model.zero_grad()
+                    else:
+                        pgd.restore_grad()
                     adv_loss = model(input_ids=src_batch, labels=tgt_batch,
                                     token_type_ids=seg_batch, attention_mask=mask_batch)[0]
                     adv_loss.backward()
-                    fgm.restore()
+                pgd.restore()
+            optimizer.step()
+            # lookahead.step()
+            # if epoch > swa_start:
+            #     swa_model.update_parameters(model)
+            #     swa_scheduler.step()
+            # else:
+            #     scheduler.step()
+            scheduler.step()
+            model.zero_grad()
 
-                if config['adv'] == 'pgd':
-                    pgd = PGD(config, model)
-                    K = config['adv_k']
-                    pgd.backup_grad()
-                    for t in range(K):
-                        pgd.attack(is_first_attack=(t == 0))
-                        if t != K - 1:
-                            model.zero_grad()
-                        else:
-                            pgd.restore_grad()
-                        adv_loss = model(input_ids=src_batch, labels=tgt_batch,
-                                        token_type_ids=seg_batch, attention_mask=mask_batch)[0]
-                        adv_loss.backward()
-                    pgd.restore()
-                optimizer.step()
-                # lookahead.step()
-                # if epoch > swa_start:
-                #     swa_model.update_parameters(model)
-                #     swa_scheduler.step()
-                # else:
-                #     scheduler.step()
-                scheduler.step()
-                model.zero_grad()
+            # 输出loss并画图
+            if (i + 1) % config['logging_step'] == 0:
+                print("\n>> epoch - {}, epoch steps - {}, global steps - {}, "
+                    "epoch avg loss - {:.4f}, global avg loss - {:.4f}, time cost - {:.2f} min".format
+                    (epoch, i + 1, global_steps + 1, cur_avg_loss / config['logging_step'],
+                    total_loss / (global_steps + 1),
+                    (time.time() - start) / 60.00))
+                viz.line([cur_avg_loss / config['logging_step']],[global_steps],win=win,update='append')
+                cur_avg_loss = 0.0
+            i +=1 
+            global_steps += 1
+                    
+        # 开始验证，寻找一个最好的模型        
+        avg_loss, avg_f1, = [], []
 
-                # 输出loss并画图
-                if (i + 1) % config['logging_step'] == 0:
-                    print("\n>> epoch - {}, epoch steps - {}, global steps - {}, "
-                        "epoch avg loss - {:.4f}, global avg loss - {:.4f}, time cost - {:.2f} min".format
-                        (epoch, i + 1, global_steps + 1, cur_avg_loss / config['logging_step'],
-                        total_loss / (global_steps + 1),
-                        (time.time() - start) / 60.00))
-                    viz.line([cur_avg_loss / config['logging_step']],[global_steps],win=win,update='append')
-                    cur_avg_loss = 0.0
-                i +=1 
-                global_steps += 1
-                     
-        
-            # 开始验证，寻找一个最好的模型
-            loss_fct = nn.CrossEntropyLoss()
-            avg_loss, avg_acc, avg_f1, avg_recall, avg_precision = [], [], [], [], []
+        precision,all_label = 0,0 # 其实这里precision,recall 是同一个值
+        best_f1 = 0 # 保存最好的f1 值
+        model.eval()
+        # 因为是遍历单个batch，所以需要记录每次得到的结果
+        for i, (src_batch,tgt_batch, seg_batch, mask_batch, ) in enumerate(tqdm(batch_loader(config, eval_src, eval_tgt, eval_seg, eval_mask))):
+            src_batch = src_batch.to(config['device'])
+            tgt_batch = tgt_batch.to(config['device'])
+            seg_batch = seg_batch.to(config['device'])
+            mask_batch = mask_batch.to(config['device'])
+            with torch.no_grad():
+                output = model(input_ids=src_batch, labels=tgt_batch,
+                                token_type_ids=seg_batch, attention_mask=mask_batch)
+            loss = output[0]
+            avg_loss.append(loss.item())
+            logits = torch.softmax(output[1], 1)
+            precision += cal_precision(logits, tgt_batch)
+            all_label += len(tgt_batch)
 
-            precision,all_label = 0,0 # 其实这里precision,recall 是同一个值
-            best_f1 = 0 # 保存最好的f1 值
-            model.eval()
-            # 因为是遍历单个batch，所以需要记录每次得到的结果
-            for i, (src_batch,tgt_batch, seg_batch, mask_batch, ) in enumerate(tqdm(batch_loader(config, eval_src, eval_tgt, eval_seg, eval_mask))):
-                src_batch = src_batch.to(config['device'])
-                tgt_batch = tgt_batch.to(config['device'])
-                seg_batch = seg_batch.to(config['device'])
-                mask_batch = mask_batch.to(config['device'])
-                with torch.no_grad():
-                    output = model(input_ids=src_batch, labels=tgt_batch,
-                                    token_type_ids=seg_batch, attention_mask=mask_batch)
-                loss = output[0]
-                avg_loss.append(loss.item())
-                logits = torch.softmax(output[1], 1)
-                precision += cal_precision(logits, tgt_batch)
-                all_label += len(tgt_batch)
+        # 可以使用 f1_score 函数来计算值 
+        val_f1 = precision / all_label
+        print("val_f1 = ",val_f1)
 
-            # 可以使用 f1_score 函数来计算值 
-            val_f1 = precision / all_label
-            print("val_f1 = ",val_f1)
-
-            if val_f1 > best_f1 :
-                best_f1 = val_f1
-                early_stopping = 0                
-                # 保存模型
-                model_save_path = os.path.join(output_path, f'checkpoint-{best_f1}')
-                # if os.path.exists(model_save_path):
-                #     os.remove(model_save_path)
-                print('model_save_path:', model_save_path)
-                model_to_save = model.module if hasattr(model, 'module') else model
-                print('\n>> model saved ... ...')
-                model_to_save.save_pretrained(model_save_path)
-                conf = json.dumps(config)
-                out_conf_path = os.path.join(output_path, f'checkpoint-{best_f1}' +
-                                            '/train_config.json')
-                with open(out_conf_path, 'w', encoding='utf-8') as f:
-                    f.write(conf)
-            else:
-                early_stopping += 1
-                print(f"Counter {early_stopping} of {config['early_stopping']}")
-                if early_stopping > config['early_stopping']:
-                    print("Early stopping with best_f1: ", best_f1, "and val_f1 for this epoch: ", avg_f1, "...")
-                    break
+        if val_f1 > best_f1 :
+            best_f1 = val_f1
+            early_stopping = 0                
+            # 保存模型
+            model_save_path = os.path.join(config['output_path'], f'checkpoint-{best_f1}')
+            # if os.path.exists(model_save_path):
+            #     os.remove(model_save_path)
+            print('model_save_path:', model_save_path)
+            model_to_save = model.module if hasattr(model, 'module') else model
+            print('\n>> model saved ... ...')
+            model_to_save.save_pretrained(model_save_path)
+            conf = json.dumps(config)
+            out_conf_path = os.path.join(config['output_path'], f'checkpoint-{best_f1}' +
+                                        '/train_config.json')
+            with open(out_conf_path, 'w', encoding='utf-8') as f:
+                f.write(conf)
+        else:
+            early_stopping += 1
+            print(f"Counter {early_stopping} of {config['early_stopping']}")
+            if early_stopping > config['early_stopping']:
+                print("Early stopping with best_f1: ", best_f1, "and val_f1 for this epoch: ", avg_f1, "...")
+                break
         
     localtime_end = time.asctime(time.localtime(time.time()))
     print("\n>> program end at:{}".format(localtime_end))
