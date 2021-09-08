@@ -1,5 +1,5 @@
 # coding:utf-8
-
+from tqdm import tqdm
 import os
 os.environ['CUDA_VISIBLE_DEVICES']='2'
 import csv
@@ -138,11 +138,11 @@ def read_dataset(config):
                 mask.append(0)
             dataset.append((src, seg, mask, id))
 
-        data_cache_path = config['normal_data_cache_path']
-        if not os.path.exists(os.path.dirname(data_cache_path)):
-            os.makedirs(os.path.dirname(data_cache_path))
-        with open(data_cache_path, 'wb') as f:
-            pickle.dump(dataset, f)
+        # data_cache_path = config['normal_data_cache_path']
+        # if not os.path.exists(os.path.dirname(data_cache_path)):
+        #     os.makedirs(os.path.dirname(data_cache_path))
+        # with open(data_cache_path, 'wb') as f:
+        #     pickle.dump(dataset, f)
 
     print("\n>>> loading sentences from {}, time cost:{:.2f}".
           format(config['test_path'], (time.time() - start) / 60.00))
@@ -157,8 +157,8 @@ def predict(dataset, pre_model, config):
     mask = torch.LongTensor([sample[2] for sample in dataset])
     id = [sample[3] for sample in dataset]
     predict_all = np.array([], dtype=int)
-    for i, (src_batch, seg_batch, mask_batch) in \
-            enumerate(batch_loader(config, src, seg, mask)):
+    for (src_batch, seg_batch, mask_batch) in \
+            tqdm(batch_loader(config, src, seg, mask)):
         src_batch = src_batch.to(config['device'])
         seg_batch = seg_batch.to(config['device'])
         mask_batch = mask_batch.to(config['device'])
@@ -182,7 +182,7 @@ def main():
         'model_type': 'bert-base-fgm', # 加载模型文件夹                
         'vocab_path': '/home/lawson/program/daguan/risk_data_grand/model/best/vocab.txt',
         'test_path': '/home/lawson/program/daguan/risk_data_grand/data/test.txt', # 测试数据
-        'load_model_path': '/home/lawson/program/daguan/risk_data_grand/model/best', # 加载训练后的模型        
+        'load_model_path': '/home/lawson/program/daguan/risk_data_grand/model/44M_checkpoint-0.6527_epoch_10', # 加载训练后的模型        
         'submit_path': 'submission.csv', # 提交结果的文件名
         'batch_size': 8,
         'max_seq_len': 300,
