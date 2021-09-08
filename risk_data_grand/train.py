@@ -351,15 +351,15 @@ def build_optimizer(config, model, train_steps):
 def main():
     config = {
         'use_model': 'nezha',
-        'normal_data_cache_path': 'user_data/processed/nezha/all_data.pkl',  # 保存训练数据 下次加载更快
+        'normal_data_cache_path': '',  # 保存训练数据 下次加载更快
         'data_path': '/home/lawson/program/daguan/risk_data_grand/data/train.txt', # 训练数据
         'output_path': '/home/lawson/program/daguan/risk_data_grand/model', # fine-tuning后保存模型的路径
-        'model_path': '/home/lawson/pretrain/chinese-roberta-wwm-ext-large', # your pretrain model path => 使用large
+        'model_path': '/home/lawson/program/daguan/pretrain_model/bert-base-fgm/2.4+2.4_checkpoint-17000', # your pretrain model path => 使用large
         # 'model_path': '/home/lawson/program/daguan/risk_data_grand/model/best', # your pretrain model path
         'shuffle_way': '',  # block_shuffle 还是 random shuffle
         'use_swa': True, # 目前没有用到
         'tokenizer_fast': False, 
-        'batch_size': 2,  
+        'batch_size': 8,  
         'num_epochs': 10,
         'max_seq_len': 300,
         'learning_rate': 2e-5,
