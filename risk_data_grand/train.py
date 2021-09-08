@@ -12,8 +12,6 @@ import warnings
 import numpy as np
 from torch.optim import Optimizer
 from collections import defaultdict
-
-import visdom
 from lookahead import Lookahead
 import torch
 import torch.nn as nn
@@ -31,8 +29,9 @@ from transformers import (
 from modeling.modeling_nezha.modeling import NeZhaPreTrainedModel, NeZhaModel
 from modeling.bert.modeling_bert import BertModel, BertPreTrainedModel
 from sparse_max.sparsemax import SparsemaxLoss
-# os.environ['CUDA_VISIBLE_DEVICES'] = '3'
 from sklearn.model_selection import StratifiedKFold,KFold
+
+
 
 class NeZhaSequenceClassification(BertPreTrainedModel):
     def __init__(self, config):
@@ -155,7 +154,7 @@ def read_dataset(config, tokenizer):
                 mask.append(0)
             dataset.append((src, tgt, seg, mask))
     
-    data_cache_path = config['normal_data_cache_path']
+    # data_cache_path = config['normal_data_cache_path']
     # if not os.path.exists(os.path.dirname(data_cache_path)):
     #     os.makedirs(os.path.dirname(data_cache_path))
     # with open(data_cache_path, 'wb') as f:
@@ -284,16 +283,18 @@ class WarmupLinearSchedule(LambdaLR):
 
 
 def block_shuffle(config, train_set):
-    bs = config['batch_size'] * 100
-    num_block = int(len(train_set) / bs)
+    bs = config['batch_size'] * 100 # block 大小
+    num_block = int(len(train_set) / bs) # 计算出一个block中的train data 个数
     slice_ = num_block * bs
-
+    # 不一定能整除，所以需要使用切片找出到最后的一位下标
     train_set_to_shuffle = train_set[:slice_]
     train_set_left = train_set[slice_:]
 
+    # 按照长度排序，这样有利于在后面tokenizer 的时候减少padding 
     sorted_train_set = sorted(train_set_to_shuffle, key=lambda i: len(i[0]))
     shuffled_train_set = []
 
+    # 先将排好序的放到temp数组中，然后排序temp。 => 可以保证在shuffle的时候尽可能保证batch间的平衡
     tmp = []
     for i in range(len(sorted_train_set)):
         tmp.append(sorted_train_set[i])
@@ -302,6 +303,7 @@ def block_shuffle(config, train_set):
             shuffled_train_set.extend(tmp)
             tmp = []
 
+    # 对剩下的元素shuffle 
     random.shuffle(train_set_left)
     shuffled_train_set.extend(train_set_left)
 
@@ -355,12 +357,12 @@ def main():
         'data_path': '/home/lawson/program/daguan/risk_data_grand/data/train.txt', # 训练数据
         'output_path': '/home/lawson/program/daguan/risk_data_grand/model', # fine-tuning后保存模型的路径
         'model_path': '/home/lawson/program/daguan/pretrain_model/bert-base-fgm/2.4+2.4_checkpoint-17000', # your pretrain model path => 使用large
-        'shuffle_way': '',  # block_shuffle 还是 random shuffle
-        'use_swa': True, # 目前没有用到
+        'shuffle_way': 'block_shuffle',  # block_shuffle 还是 random shuffle         
+        'use_swa': True, # 目前没有用到？？？
         'tokenizer_fast': False, 
         'batch_size': 8,  
         'num_epochs': 10,
-        'max_seq_len': 300,
+        'max_seq_len': 128,
         'learning_rate': 2e-5,
         'alpha': 0.3,  # PGD的alpha参数设置 
         'epsilon': 1.0, # FGM的epsilon参数设置 
@@ -372,7 +374,7 @@ def main():
         'device': 'cuda',
         'logging_step': 500, # 每500步打印logger
         'seed': 124525601, # 随机种子 
-        'fold': 5 # k-flod   
+        'fold': 5 # k-flod
         }
 
     warnings.filterwarnings('ignore')
@@ -381,21 +383,24 @@ def main():
     print("\n>> loading model from :{}".format(config['model_path']))
     
     tokenizer, model = build_model_and_tokenizer(config)
-    if not os.path.exists(config['normal_data_cache_path']):
-        train_set = read_dataset(config, tokenizer)
-        # train_set = read_single_dataset(config, tokenizer, 'data_path2')
-    else:
-        with open(config['normal_data_cache_path'], 'rb') as f:
-            train_set = pickle.load(f)
-    
+    # if not os.path.exists(config['normal_data_cache_path']):
+    #     train_set = read_dataset(config, tokenizer)
+    #     # train_set = read_single_dataset(config, tokenizer, 'data_path2')
+    # else:
+    #     with open(config['normal_data_cache_path'], 'rb') as f:
+    #         train_set = pickle.load(f)
+    # 确保每次读取的数据都是最新的
+    train_set = read_dataset(config, tokenizer)
     seed_everything(config['seed'])
 
     if config['shuffle_way'] == 'block_shuffle':
         train_set = block_shuffle(config, train_set)
     else:
-        random.shuffle(train_set)
+        random.shuffle(train_set)  # 这种shuffle效率不高
 
     train_num = len(train_set)
+
+    # +1 大概率是为了 range() 函数使用
     train_steps = int(train_num * config['num_epochs'] / config['batch_size']) + 1
     
     optimizer, scheduler = build_optimizer(config, model, train_steps)
