@@ -185,7 +185,7 @@ def main():
         'load_model_path': '/home/lawson/program/daguan/risk_data_grand/model/44M_checkpoint-0.6527_epoch_10', # 加载训练后的模型        
         'submit_path': 'submission.csv', # 提交结果的文件名
         'batch_size': 8,
-        'max_seq_len': 300,
+        'max_seq_len': 128,
         'device': 'cuda',
     }
 

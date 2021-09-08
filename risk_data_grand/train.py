@@ -354,13 +354,13 @@ def main():
         'normal_data_cache_path': 'user_data/processed/nezha/all_data.pkl',  # 保存训练数据 下次加载更快
         'data_path': '/home/lawson/program/daguan/risk_data_grand/data/train.txt', # 训练数据
         'output_path': '/home/lawson/program/daguan/risk_data_grand/model', # fine-tuning后保存模型的路径
-        'model_path': '/home/lawson/program/daguan/pretrain_model/bert-base-fgm/44M_large_checkpoint-9000', # your pretrain model path => 使用large
-        'shuffle_way': '',  # block_shuffle 还是 random shuffle
+        'model_path': '/home/lawson/program/daguan/pretrain_model/bert-base-fgm/2.4_large_13000', # your pretrain model path => 使用large
+        'shuffle_way': 'block_shuffle',  # block_shuffle 还是 random shuffle
         'use_swa': True, # 目前没有用到
         'tokenizer_fast': False, 
         'batch_size': 2,  
         'num_epochs': 10,
-        'max_seq_len': 300,
+        'max_seq_len': 128,
         'learning_rate': 2e-5,
         'alpha': 0.3,  # PGD的alpha参数设置 
         'epsilon': 1.0, # FGM的epsilon参数设置 
