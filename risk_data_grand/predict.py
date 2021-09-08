@@ -138,11 +138,11 @@ def read_dataset(config):
                 mask.append(0)
             dataset.append((src, seg, mask, id))
 
-        data_cache_path = config['normal_data_cache_path']
-        if not os.path.exists(os.path.dirname(data_cache_path)):
-            os.makedirs(os.path.dirname(data_cache_path))
-        with open(data_cache_path, 'wb') as f:
-            pickle.dump(dataset, f)
+        # data_cache_path = config['normal_data_cache_path']
+        # if not os.path.exists(os.path.dirname(data_cache_path)):
+        #     os.makedirs(os.path.dirname(data_cache_path))
+        # with open(data_cache_path, 'wb') as f:
+        #     pickle.dump(dataset, f)
 
     print("\n>>> loading sentences from {}, time cost:{:.2f}".
           format(config['test_path'], (time.time() - start) / 60.00))

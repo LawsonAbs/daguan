@@ -167,6 +167,7 @@ def main():
 
     mlm_probability = 0.15
     num_train_epochs = config.num_epochs
+    seq_length = 128
     batch_size = config.batch_size
     fgm_epsilon = 1.0
     learning_rate = 2e-5
@@ -191,14 +192,12 @@ def main():
     #     model_name = 'macbert'
     # elif config['pretrain_type'] == 'uer_dynamic_mask':
     #     model_name = 'uer/bert-base'
-    config.data_cache_path = '../user_data/pretrain/'+config.model_type+'/data.pkl'
+    # config.data_cache_path = '../user_data/pretrain/'+config.model_type+'/data.pkl'
 
-    # model_path = '/home/lawson/program/daguan/' + model_name + '/pytorch_model.bin'
-    model_path = "/home/lawson/pretrain/chinese-roberta-wwm-ext-large/pytorch_model.bin"
+    model_path = "/home/lawson/program/daguan/pretrain_model/bert-base-fgm/2.4G_large_13000step/pytorch_model.bin"
     # model_path = "/home/lawson/program/daguan/pretrain_model/bert-base-fgm/final/pytorch_model.bin"
     config_path = '/home/lawson/pretrain/chinese-roberta-wwm-ext-large/config.json'    
     vocab_file = '/home/lawson/pretrain/chinese-roberta-wwm-ext-large/vocab.txt'
-    # vocab_file = '/home/lawson/program/daguan/pretrain_modelnezha-base-count5/pretrain/nezha_model/vocab.txt'
     
     tokenizer = BertTokenizer.from_pretrained(vocab_file)
    
@@ -251,7 +250,7 @@ def main():
         )
 
     # 遍历所有文件    
-    train_file_path = "/home/lawson/program/daguan/risk_data_grand/data/small_json/0.txt"
+    train_file_path = "/home/lawson/program/daguan/risk_data_grand/data/small_json/10.txt"
     # dataset = Dataset( )
     dataset = LineByLineTextDataset(tokenizer=tokenizer,
                                     train_file_path=train_file_path,                                        
