@@ -360,7 +360,7 @@ def main():
     config = {
         'use_model': 'nezha',
         'normal_data_cache_path': '',  # 保存训练数据 下次加载更快
-        'data_path': '/home/lawson/program/daguan/risk_data_grand/data/train_1000.txt', # 训练数据
+        'data_path': '/home/lawson/program/daguan/risk_data_grand/data/train.txt', # 训练数据
         'output_path': '/home/lawson/program/daguan/risk_data_grand/model', # fine-tuning后保存模型的路径
         'model_path': '/home/lawson/program/daguan/pretrain_model/bert-base-fgm/2.4_large_13000_300', # your pretrain model path => 使用large
         'shuffle_way': 'block_shuffle',  # block_shuffle 还是 random shuffle         
@@ -368,7 +368,7 @@ def main():
         'tokenizer_fast': False, 
         'batch_size': 8,
         'num_epochs': 10,
-        'max_seq_len': 128,
+        'max_seq_len': 128, 
         'learning_rate': 2e-5,
         'alpha': 0.3,  # PGD的alpha参数设置 
         'epsilon': 1.0, # FGM的epsilon参数设置 

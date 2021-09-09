@@ -180,12 +180,12 @@ def predict(dataset, pre_model, config):
 def main():
     config = {
         'model_type': 'bert-base-fgm', # 加载模型文件夹                
-        'vocab_path': '/home/lawson/program/daguan/risk_data_grand/model/best/vocab.txt',
+        # 'vocab_path': '/home/lawson/program/daguan/risk_data_grand/model/best/vocab.txt',
         'test_path': '/home/lawson/program/daguan/risk_data_grand/data/test.txt', # 测试数据
-        'load_model_path': '/home/lawson/program/daguan/risk_data_grand/model/44M_checkpoint-0.6527_epoch_10', # 加载训练后的模型        
+        'load_model_path': '/home/lawson/program/daguan/risk_data_grand/model/2.4_large_13000_checkpoint-0.889_lst_epoch', # 加载训练后的模型        
         'submit_path': 'submission.csv', # 提交结果的文件名
         'batch_size': 8,
-        'max_seq_len': 128,
+        'max_seq_len': 128, 
         'device': 'cuda',
     }
 
