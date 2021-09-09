@@ -97,13 +97,13 @@ class LineByLineTextDataset(Dataset):
         with open(train_file_path, encoding="utf-8") as f:
             # isspace 用于判断一个字符串中的字符是否全是whitespace                    
             flag  = 0
-            for line in tqdm(f,total=500001):                
-                temp_input_ids = [0] * 300
+            for line in tqdm(f,total=500001):
+                temp_input_ids = [0] * block_size
                 temp_input_ids[0] = 2
                 if len(line )>0 and not line.isspace():
                     line = line.strip("\n")                    
                     row = re.split(r'([，。？！ ])',line)
-                    max_length = 300 # 最大长度
+                    max_length = block_size # 最大长度
                     cnt = 1
                     for i in row:
                         if i ==' ' or i =='':
@@ -117,7 +117,7 @@ class LineByLineTextDataset(Dataset):
                             break
                         cnt +=1                
                 temp_input_ids[-1] = 3
-                if (len (temp_input_ids)==300):                    
+                if (len (temp_input_ids)==block_size):                    
                     input_ids.append(temp_input_ids) # 放入到所有的当中
 
         # with open(train_file_path, encoding="utf-8") as f:
@@ -153,7 +153,7 @@ def main():
     parser.add_argument("--manual_seed", default=123456, type=int,help='seed num')
     parser.add_argument("--train_fgm", default=False,type=boolean_string)
     parser.add_argument("--fgm_epsilon", default=1.0)
-    parser.add_argument("--batch_size", default=4,type=int)
+    parser.add_argument("--batch_size", default=8,type=int)
     parser.add_argument("--num_epochs",default=100,type=int)
     parser.add_argument("--gradient_accumulation_steps", default=2,type=int)
     # parser.add_argument("--train_data_path", default='/home/lawson/program/daguan/risk_data_grand/data/pretrain_train.txt',type=str)    
@@ -162,6 +162,7 @@ def main():
     parser.add_argument("--model_type",default="bert", type=str)
     parser.add_argument("--model_save_path",default="/home/lawson/program/daguan/pretrain_model/bert-base-fgm/final/", type=str)
     parser.add_argument("--data_cache_path,",default='', type=str)
+    parser.add_argument("--seq_length", default=128, type=int)    
     config = parser.parse_args()
 
     mlm_probability = 0.15
@@ -252,7 +253,9 @@ def main():
     # dataset = Dataset( )
     dataset = LineByLineTextDataset(tokenizer=tokenizer,
                                     train_file_path=train_file_path,                                        
-                                    block_size=seq_length)
+                                    block_size=seq_length,
+                                    
+                                    )
     print('>> train data load end....')
     print('>> load data cost {} s'.format(time.time()- start_time))
             
