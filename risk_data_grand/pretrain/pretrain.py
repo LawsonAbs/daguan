@@ -156,8 +156,8 @@ def main():
     parser.add_argument("--batch_size", default=4,type=int)
     parser.add_argument("--num_epochs",default=100,type=int)
     parser.add_argument("--gradient_accumulation_steps", default=2,type=int)
-    parser.add_argument("--train_data_path", default='/home/lawson/program/daguan/risk_data_grand/data/pretrain_train.txt',type=str)    
-    parser.add_argument("--test_data_path", default='/home/lawson/program/daguan/risk_data_grand/data/pretrain_test.txt',type=str)    
+    # parser.add_argument("--train_data_path", default='/home/lawson/program/daguan/risk_data_grand/data/pretrain_train.txt',type=str)    
+    # parser.add_argument("--test_data_path", default='/home/lawson/program/daguan/risk_data_grand/data/pretrain_test.txt',type=str)    
     parser.add_argument("--model_name", default="bert-base-fgm", type=str)
     parser.add_argument("--model_type",default="bert", type=str)
     parser.add_argument("--model_save_path",default="/home/lawson/program/daguan/pretrain_model/bert-base-fgm/final/", type=str)
@@ -193,13 +193,12 @@ def main():
     #     model_name = 'uer/bert-base'
     # config.data_cache_path = '../user_data/pretrain/'+config.model_type+'/data.pkl'
 
-    model_path = "/home/lawson/program/daguan/pretrain_model/bert-base-fgm/2.4G_large_13000step/pytorch_model.bin"
-    # model_path = "/home/lawson/program/daguan/pretrain_model/bert-base-fgm/final/pytorch_model.bin"
-    config_path = '/home/lawson/pretrain/chinese-roberta-wwm-ext-large/config.json'    
+    # model_path = "/home/lawson/program/daguan/pretrain_model/bert-base-fgm/2.4G_large_13000step/pytorch_model.bin"
+    model_path = "/home/lawson/pretrain/chinese-roberta-wwm-ext-large/pytorch_model.bin"
+    config_path = '/home/lawson/pretrain/chinese-roberta-wwm-ext-large/config.json'
     vocab_file = '/home/lawson/pretrain/chinese-roberta-wwm-ext-large/vocab.txt'
     
     tokenizer = BertTokenizer.from_pretrained(vocab_file)
-   
 
     assert os.path.isfile(model_path), f"Input file path {model_path} not found, " \
                                        f"please download relative pretrain model in huggingface or" \
@@ -249,7 +248,7 @@ def main():
         )
 
     # 遍历所有文件    
-    train_file_path = "/home/lawson/program/daguan/risk_data_grand/data/small_json/10.txt"
+    train_file_path = "/home/lawson/program/daguan/risk_data_grand/data/small_json/20.txt"
     # dataset = Dataset( )
     dataset = LineByLineTextDataset(tokenizer=tokenizer,
                                     train_file_path=train_file_path,                                        
@@ -270,7 +269,7 @@ def main():
     # tokenizer.save_pretrained(model_save_path)
         # if config.model_type == 'bert':
         #     model = BertForMaskedLM.from_pretrained(pretrained_model_name_or_path=model_save_path + "pytorch_model.bin",
-        #                                             config=model_config)        
+        #                                             config=model_config)
         
 if __name__ == '__main__':
     main()
