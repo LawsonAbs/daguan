@@ -97,7 +97,7 @@ class LineByLineTextDataset(Dataset):
         with open(train_file_path, encoding="utf-8") as f:
             # isspace 用于判断一个字符串中的字符是否全是whitespace                    
             flag  = 0
-            for line in tqdm(f,total=500001):
+            for line in tqdm(f): # tqdm中可以加total参数表示总行数
                 temp_input_ids = [0] * block_size
                 temp_input_ids[0] = 2
                 if len(line )>0 and not line.isspace():
@@ -154,10 +154,8 @@ def main():
     parser.add_argument("--train_fgm", default=False,type=boolean_string)
     parser.add_argument("--fgm_epsilon", default=1.0)
     parser.add_argument("--batch_size", default=8,type=int)
-    parser.add_argument("--num_epochs",default=100,type=int)
-    parser.add_argument("--gradient_accumulation_steps", default=2,type=int)
-    # parser.add_argument("--train_data_path", default='/home/lawson/program/daguan/risk_data_grand/data/pretrain_train.txt',type=str)    
-    # parser.add_argument("--test_data_path", default='/home/lawson/program/daguan/risk_data_grand/data/pretrain_test.txt',type=str)    
+    parser.add_argument("--num_epochs",default=200,type=int)
+    parser.add_argument("--gradient_accumulation_steps", default=2,type=int)    
     parser.add_argument("--model_name", default="bert-base-fgm", type=str)
     parser.add_argument("--model_type",default="bert", type=str)
     parser.add_argument("--model_save_path",default="/home/lawson/program/daguan/pretrain_model/bert-base-fgm/final/", type=str)
@@ -183,19 +181,9 @@ def main():
     gradient_accumulation_steps = config.gradient_accumulation_steps
     print(config)
     print(f'use_fgm={use_fgm}')
-    # put dowm your file path
-    # if config['pretrain_type'] == 'whole_word_mask':
-    #     model_name = 'nezha-base-wwm'
-    # elif config['pretrain_type'] == 'dynamic_mask':
-    #     model_name = 'nezha-cn-base'
-    # elif config['pretrain_type'] == 'mac_dynamic_mask':
-    #     model_name = 'macbert'
-    # elif config['pretrain_type'] == 'uer_dynamic_mask':
-    #     model_name = 'uer/bert-base'
-    # config.data_cache_path = '../user_data/pretrain/'+config.model_type+'/data.pkl'
-
-    # model_path = "/home/lawson/program/daguan/pretrain_model/bert-base-fgm/2.4G_large_13000step/pytorch_model.bin"
-    model_path = "/home/lawson/pretrain/chinese-roberta-wwm-ext-large/pytorch_model.bin"
+    
+    
+    model_path = "/home/lawson/program/daguan/pretrain_model/bert-base-fgm/2.4G_large_10000_128/pytorch_model.bin"
     config_path = '/home/lawson/pretrain/chinese-roberta-wwm-ext-large/config.json'
     vocab_file = '/home/lawson/pretrain/chinese-roberta-wwm-ext-large/vocab.txt'
     
@@ -248,8 +236,8 @@ def main():
             seed=seed
         )
 
-    # 遍历所有文件    
-    train_file_path = "/home/lawson/program/daguan/risk_data_grand/data/small_json/20.txt"
+    # 
+    train_file_path = "/home/lawson/program/daguan/risk_data_grand/data/all.txt"
     # dataset = Dataset( )
     dataset = LineByLineTextDataset(tokenizer=tokenizer,
                                     train_file_path=train_file_path,                                        
