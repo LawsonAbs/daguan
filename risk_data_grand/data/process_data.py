@@ -133,22 +133,36 @@ def convert_data_list():
     write(test_sentence, out_test_path)
     print(f'cost time={time.time()}-{start_time} s')
 
+
+# 合并train.txt 和 test.txt 成一个纯内容文件，即去掉其中的id，和train里面的标签
+def concat_data(train_path,test_path,out_path ):
+    all_content = [] # 记录train + test 中的数据集
+    with open(train_path, 'r') as f_train:
+        for line in f_train:
+            line = line.strip("\n").split('\t')[1]
+            all_content.append(line)
+
+    with open(test_path, 'r') as f_test:
+        for line in f_test:
+            line = line.strip().split('\t')[1]
+            all_content.append(line)    
+    with open(out_path,'w') as f:
+        for line in all_content:
+            f.write(line+"\n")
+
 def convert_data():
     print('>> convert data')
     start_time = time.time()
     train_path = 'datagrand_2021_train.csv'
     test_path = 'datagrand_2021_test.csv'
-    unlabel_train_path = 'datagrand_unlabeled_data_10w.csv'
     # 生成预训练的数据
     out_train_path = '/data1/liushu/risk_data_grand/data/pretrain_train.txt'
     out_test_path = '/data1/liushu/risk_data_grand/data/pretrain_test.txt'
 
     train_sentence = get_pretrain_all_csv(train_path)
     test_sentence = get_pretrain_all_csv(test_path, True)
-    unlabel_train_sentence = get_unlabel_pretrain_all_csv(unlabel_train_path)
 
     write(train_sentence, out_train_path)
-    write(test_sentence+unlabel_train_sentence[:20000], out_test_path)
     # 生成训练的数据
     out_train_path = '/data1/liushu/risk_data_grand/data/train.txt'
     out_test_path = '/data1/liushu/risk_data_grand/data/test.txt'
@@ -161,6 +175,8 @@ def convert_data():
     
     print(f'cost time={time.time()-start_time} s')
 
+
+# 将无标签数据分割成均匀样本
 def split_data():
     source = "/home/lawson/program/daguan/risk_data_grand/data/datagrand_2021_unlabeled_data.json"
     temp = []
@@ -184,7 +200,7 @@ def split_data():
             cnt +=1
             line = f.readline()
 
-
+# 找出文本中的所有标点字符
 def readTxt(path):
     punc = set()
     with open(path,'r',errors='ignore') as f:
@@ -290,4 +306,8 @@ if __name__ == '__main__':
     # index = [i for i in range(35)]
     # id_label = dict(zip(index,id_label))
     # print(id_label)
-    analysis_submission("submission_0906.csv")
+    # analysis_submission("submission_0906.csv")
+    train_path = "/home/lawson/program/daguan/risk_data_grand/data/train.txt"
+    test_path = "/home/lawson/program/daguan/risk_data_grand/data/test.txt"
+    out_path = "/home/lawson/program/daguan/risk_data_grand/data/all.txt"
+    concat_data(train_path, test_path, out_path)
