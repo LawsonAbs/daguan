@@ -356,7 +356,7 @@ def build_optimizer(config, model, train_steps):
     return optimizer, scheduler
 
 
-def main():
+def train():
     config = {
         'use_model': 'nezha',
         'normal_data_cache_path': '',  # 保存训练数据 下次加载更快
@@ -585,6 +585,96 @@ def main():
     localtime_end = time.asctime(time.localtime(time.time()))
     print("\n>> program end at:{}".format(localtime_end))
 
+# 验证函数
+def eval():
+    config = {
+        'use_model': 'nezha',
+        'normal_data_cache_path': '',  # 保存训练数据 下次加载更快
+        'data_path': '/home/lawson/program/daguan/risk_data_grand/data/train.txt', # 训练数据
+        'output_path': '/home/lawson/program/daguan/risk_data_grand/model', # fine-tuning后保存模型的路径
+        'model_path': '/home/lawson/program/daguan/risk_data_grand/model/best', # your pretrain model path => 使用large
+        'shuffle_way': 'block_shuffle',  # block_shuffle 还是 random shuffle         
+        'use_swa': True, # 目前没有用到？？？
+        'tokenizer_fast': False, 
+        'batch_size': 8,
+        'num_epochs': 10,
+        'max_seq_len': 128,         
+        'alpha': 0.3,  # PGD的alpha参数设置 
+        'epsilon': 1.0, # FGM的epsilon参数设置 
+        'adv_k': 3, # PGD的训练次数
+        'emb_name': 'word_embeddings.', 
+        'device': 'cuda',        
+        'seed': 124525601, # 随机种子         
+        }
+
+    warnings.filterwarnings('ignore')
+    localtime_start = time.asctime(time.localtime(time.time()))
+    print(">> program start at:{}".format(localtime_start))
+    print("\n>> loading model from :{}".format(config['model_path']))
+    
+    tokenizer, model = build_model_and_tokenizer(config)    
+    # 确保每次读取的数据都是最新的
+    train_set = read_dataset(config, tokenizer)
+    seed_everything(config['seed']) # 这里对所有的都随机数都取了
+
+    if config['shuffle_way'] == 'block_shuffle':
+        train_set = block_shuffle(config, train_set)
+    else:
+        random.shuffle(train_set)  # 这种shuffle效率不高
+
+    train_num = len(train_set)
+
+    # +1 大概率是为了 range() 函数使用
+    train_steps = int(train_num * config['num_epochs'] / config['batch_size']) + 1
+        
+    model.to(config['device'])
+    src = [example[0] for example in train_set]
+    tgt = [example[1] for example in train_set]
+    seg = [example[2] for example in train_set]
+    mask = [example[3] for example in train_set]
+    kfold_dataset = [] # 放到？？
+    for input_ids, type_ids, attention_masks in zip(src, seg, mask):
+        kfold_dataset.append((input_ids, type_ids, attention_masks))
+    
+    cudnn.benchmark = True
+    
+    kfold_dataset = np.array(kfold_dataset)
+    tgt_numpy = np.array(tgt)
+    # 分割得到的结果是[X_train,y_train]为一对，为了方便前后对比，这里使用了一个random_state 保持每次划分一致
+    # X表示的是输入，y表示的是标签；train表示的是训练集，test表示的验证集
+    X_train,X_test,y_train,y_test = train_test_split(kfold_dataset,tgt_numpy,test_size=0.15,random_state=22)
+    print(X_test[1][0])
+    # eval
+    eval_src = torch.LongTensor([example[0] for example in X_test])
+    eval_seg = torch.LongTensor([example[1] for example in X_test])
+    eval_mask = torch.LongTensor([example[2] for example in X_test])
+    eval_tgt = torch.LongTensor(y_test)    
+
+    all_label = [] 
+    model.eval()
+    # 因为是遍历单个batch，所以需要记录每次得到的结果
+    # 为什么这里的batch_size = 3？？？
+    all_preds = [] # 存储所有的预测结果
+    for i, (src_batch,tgt_batch, seg_batch, mask_batch, ) in enumerate(tqdm(batch_loader(config, eval_src, eval_tgt, eval_seg, eval_mask))):
+        src_batch = src_batch.to(config['device'])
+        tgt_batch = tgt_batch.to(config['device'])
+        seg_batch = seg_batch.to(config['device'])
+        mask_batch = mask_batch.to(config['device'])
+        with torch.no_grad():
+            output = model(input_ids=src_batch, labels=tgt_batch,
+                            token_type_ids=seg_batch, attention_mask=mask_batch)
+        loss = output[0]        
+        logits = torch.softmax(output[1], 1)            
+        preds = torch.argmax(logits,-1)
+        all_preds.extend(preds.tolist())    
+        all_label.extend(tgt_batch.tolist())
+
+    # 使用 f1_score 函数来计算值
+    macro_f1 = cal_f1(all_preds, all_label)                
+    print("macro_f1 = ",macro_f1)
+    localtime_end = time.asctime(time.localtime(time.time()))
+    print("\n>> program end at:{}".format(localtime_end))
 
 if __name__ == '__main__':
-    main()
+    # train()
+    eval()
