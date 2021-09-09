@@ -593,7 +593,7 @@ def eval():
         'data_path': '/home/lawson/program/daguan/risk_data_grand/data/train.txt', # 训练数据
         'output_path': '/home/lawson/program/daguan/risk_data_grand/model', # fine-tuning后保存模型的路径
         # 'model_path': '/home/lawson/program/daguan/risk_data_grand/model/best', # your pretrain model path => 使用large
-        'model_path': '/home/lawson/program/daguan/risk_data_grand/model/2.4_large_13000_checkpoint-0.889_lst_epoch', 
+        'model_path': '/home/lawson/program/daguan/risk_data_grand/model/checkpoint-0.692197906755471', 
         'shuffle_way': 'block_shuffle',  # block_shuffle 还是 random shuffle         
         'use_swa': True, # 目前没有用到？？？
         'tokenizer_fast': False, 
@@ -673,4 +673,4 @@ def eval():
 
 if __name__ == '__main__':
     # train()
-    eval()
+    eval() 
