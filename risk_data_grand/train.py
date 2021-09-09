@@ -592,13 +592,13 @@ def eval():
         'normal_data_cache_path': '',  # 保存训练数据 下次加载更快
         'data_path': '/home/lawson/program/daguan/risk_data_grand/data/train.txt', # 训练数据
         'output_path': '/home/lawson/program/daguan/risk_data_grand/model', # fine-tuning后保存模型的路径
-        'model_path': '/home/lawson/program/daguan/risk_data_grand/model/best', # your pretrain model path => 使用large
+        # 'model_path': '/home/lawson/program/daguan/risk_data_grand/model/best', # your pretrain model path => 使用large
+        'model_path': '/home/lawson/program/daguan/risk_data_grand/model/2.4_large_13000_checkpoint-0.889_lst_epoch', 
         'shuffle_way': 'block_shuffle',  # block_shuffle 还是 random shuffle         
         'use_swa': True, # 目前没有用到？？？
         'tokenizer_fast': False, 
-        'batch_size': 8,
-        'num_epochs': 10,
-        'max_seq_len': 128,         
+        'batch_size': 8,        
+        'max_seq_len': 128,
         'alpha': 0.3,  # PGD的alpha参数设置 
         'epsilon': 1.0, # FGM的epsilon参数设置 
         'adv_k': 3, # PGD的训练次数
@@ -622,11 +622,7 @@ def eval():
     else:
         random.shuffle(train_set)  # 这种shuffle效率不高
 
-    train_num = len(train_set)
-
-    # +1 大概率是为了 range() 函数使用
-    train_steps = int(train_num * config['num_epochs'] / config['batch_size']) + 1
-        
+    train_num = len(train_set)          
     model.to(config['device'])
     src = [example[0] for example in train_set]
     tgt = [example[1] for example in train_set]
