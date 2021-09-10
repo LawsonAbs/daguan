@@ -184,8 +184,8 @@ def main():
     
     
     model_path = "/home/lawson/program/daguan/pretrain_model/bert-base-fgm/2.4G_large_10000_128/pytorch_model.bin"
-    config_path = '/home/lawson/pretrain/chinese-roberta-wwm-ext-large/config.json'
-    vocab_file = '/home/lawson/pretrain/chinese-roberta-wwm-ext-large/vocab.txt'
+    config_path = '/home/lawson/program/daguan/pretrain_model/bert-base-fgm/2.4G_large_10000_128/config.json'
+    vocab_file = "/home/lawson/program/daguan/pretrain_model/bert-base-fgm/2.4G_large_10000_128/vocab.txt"
     
     tokenizer = BertTokenizer.from_pretrained(vocab_file)
 
@@ -227,13 +227,14 @@ def main():
             output_dir='/home/lawson/program/daguan/pretrain_model/bert-base-fgm',
             num_train_epochs=num_train_epochs,
             learning_rate=learning_rate,
-            per_device_train_batch_size=batch_size,
+            per_device_train_batch_size=batch_size, # 注意这里是每个设备上的batch_size，而不是总共的batch_size 
             save_steps=save_steps,
             gradient_accumulation_steps=gradient_accumulation_steps,
             logging_steps=500,
             save_total_limit=500,
             prediction_loss_only=True,
-            seed=seed
+            seed=seed,
+            # batch_size= 8
         )
 
     # 
