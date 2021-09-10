@@ -362,7 +362,7 @@ def train():
         'normal_data_cache_path': '',  # 保存训练数据 下次加载更快
         'data_path': '/home/lawson/program/daguan/risk_data_grand/data/train.txt', # 训练数据
         'output_path': '/home/lawson/program/daguan/risk_data_grand/model', # fine-tuning后保存模型的路径
-        'model_path': '/home/lawson/program/daguan/pretrain_model/bert-base-fgm/2.4G_large_10000_128', # your pretrain model path => 使用large
+        'model_path': '/home/lawson/program/daguan/pretrain_model/bert-base-fgm/2.4G+4.8M_large_10000_128_checkpoint-21000', # your pretrain model path => 使用large
         'shuffle_way': 'block_shuffle',  # block_shuffle 还是 random shuffle         
         'use_swa': True, # 目前没有用到？？？
         'tokenizer_fast': False, 
@@ -672,5 +672,5 @@ def eval():
     print("\n>> program end at:{}".format(localtime_end))
 
 if __name__ == '__main__':
-    # train()
-    eval() 
+    train()
+    # eval() 
