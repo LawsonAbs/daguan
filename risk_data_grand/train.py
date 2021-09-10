@@ -362,7 +362,7 @@ def train():
         'normal_data_cache_path': '',  # 保存训练数据 下次加载更快
         'data_path': '/home/lawson/program/daguan/risk_data_grand/data/train.txt', # 训练数据
         'output_path': '/home/lawson/program/daguan/risk_data_grand/model', # fine-tuning后保存模型的路径
-        'model_path': '/home/lawson/program/daguan/pretrain_model/bert-base-fgm/2.4G+4.8M_large_10000_128_checkpoint-21000', # your pretrain model path => 使用large
+        'model_path': '/home/lawson/program/daguan/pretrain_model/bert-base-fgm/2.4G+4.8M_large_10000_128_checkpoint-40000', # your pretrain model path => 使用large
         'shuffle_way': 'block_shuffle',  # block_shuffle 还是 random shuffle         
         'use_swa': True, # 目前没有用到？？？
         'tokenizer_fast': False, 
@@ -418,9 +418,9 @@ def train():
     tgt = [example[1] for example in train_set]
     seg = [example[2] for example in train_set]
     mask = [example[3] for example in train_set]
-    kfold_dataset = [] # 放到？？
-    for input_ids, type_ids, attention_masks in zip(src, seg, mask):
-        kfold_dataset.append((input_ids, type_ids, attention_masks))
+    # kfold_dataset = [] 
+    # for input_ids, type_ids, attention_masks in zip(src, seg, mask):
+    #     kfold_dataset.append((input_ids, type_ids, attention_masks))
     
     # train_data = TensorDataset(src, tgt, seg, mask)
     # train_sampler = RandomSampler(train_data)
@@ -441,24 +441,30 @@ def train():
     viz = Visdom()
     win = "train_loss"
     # skf = StratifiedKFold(n_splits=config['fold'],shuffle=True,random_state=config['seed'])
-    kfold_dataset = np.array(kfold_dataset)
-    tgt_numpy = np.array(tgt)
+    # kfold_dataset = np.array(kfold_dataset)
+    # tgt_numpy = np.array(tgt)
     # 分割得到的结果是[X_train,y_train]为一对，为了方便前后对比，这里使用了一个random_state 保持每次划分一致
     # X表示的是输入，y表示的是标签；train表示的是训练集，test表示的验证集
-    X_train,X_test,y_train,y_test = train_test_split(kfold_dataset,tgt_numpy,test_size=0.15,random_state=22)
+    # X_train,X_test,y_train,y_test = train_test_split(kfold_dataset,tgt_numpy,test_size=0.15,random_state=22)
 
     
     # train
-    src = torch.LongTensor([example[0] for example in X_train])
-    seg = torch.LongTensor([example[1] for example in X_train])
-    mask = torch.LongTensor([example[2] for example in X_train])
-    tgt = torch.LongTensor(y_train)
+    # src = torch.LongTensor([example[0] for example in X_train])
+    # seg = torch.LongTensor([example[1] for example in X_train])
+    # mask = torch.LongTensor([example[2] for example in X_train])
+    # tgt = torch.LongTensor(y_train)
     
-    # eval
-    eval_src = torch.LongTensor([example[0] for example in X_test])
-    eval_seg = torch.LongTensor([example[1] for example in X_test])
-    eval_mask = torch.LongTensor([example[2] for example in X_test])
-    eval_tgt = torch.LongTensor(y_test)    
+    src = torch.LongTensor(src)
+    seg = torch.LongTensor(seg)
+    mask = torch.LongTensor(mask)
+    tgt = torch.LongTensor(tgt)
+    
+
+    # # eval
+    # eval_src = torch.LongTensor([example[0] for example in X_test])
+    # eval_seg = torch.LongTensor([example[1] for example in X_test])
+    # eval_mask = torch.LongTensor([example[2] for example in X_test])
+    # eval_tgt = torch.LongTensor(y_test)    
 
     for epoch in range(1, config['num_epochs'] + 1):
         model.train()
@@ -532,49 +538,48 @@ def train():
             global_steps += 1
                     
         # 开始验证，寻找一个最好的模型        
-        avg_loss, avg_f1, = [], []
+        # avg_loss, avg_f1, = [], []
 
-        all_label = [] # 其实这里precision,recall 是同一个值
-        best_f1 = 0 # 保存最好的f1 值
-        model.eval()
-        # 因为是遍历单个batch，所以需要记录每次得到的结果
-        # 为什么这里的batch_size = 3？？？
-        all_preds = [] # 存储所有的预测结果
-        for i, (src_batch,tgt_batch, seg_batch, mask_batch, ) in enumerate(tqdm(batch_loader(config, eval_src, eval_tgt, eval_seg, eval_mask))):
-            src_batch = src_batch.to(config['device'])
-            tgt_batch = tgt_batch.to(config['device'])
-            seg_batch = seg_batch.to(config['device'])
-            mask_batch = mask_batch.to(config['device'])
-            with torch.no_grad():
-                output = model(input_ids=src_batch, labels=tgt_batch,
-                                token_type_ids=seg_batch, attention_mask=mask_batch)
-            loss = output[0]
-            avg_loss.append(loss.item())
-            logits = torch.softmax(output[1], 1)            
-            preds = torch.argmax(logits,-1)
-            all_preds.extend(preds.tolist())    
-            all_label.extend(tgt_batch.tolist())
+        # all_label = [] # 其实这里precision,recall 是同一个值
+        # best_f1 = 0 # 保存最好的f1 值
+        # model.eval()
+        # # 因为是遍历单个batch，所以需要记录每次得到的结果
+        # # 为什么这里的batch_size = 3？？？
+        # all_preds = [] # 存储所有的预测结果
+        # for i, (src_batch,tgt_batch, seg_batch, mask_batch, ) in enumerate(tqdm(batch_loader(config, eval_src, eval_tgt, eval_seg, eval_mask))):
+        #     src_batch = src_batch.to(config['device'])
+        #     tgt_batch = tgt_batch.to(config['device'])
+        #     seg_batch = seg_batch.to(config['device'])
+        #     mask_batch = mask_batch.to(config['device'])
+        #     with torch.no_grad():
+        #         output = model(input_ids=src_batch, labels=tgt_batch,
+        #                         token_type_ids=seg_batch, attention_mask=mask_batch)
+        #     loss = output[0]
+        #     avg_loss.append(loss.item())
+        #     logits = torch.softmax(output[1], 1)            
+        #     preds = torch.argmax(logits,-1)
+        #     all_preds.extend(preds.tolist())    
+        #     all_label.extend(tgt_batch.tolist())
 
-        # 使用 f1_score 函数来计算值
-        macro_f1 = cal_f1(all_preds, all_label)                
-        print("macro_f1 = ",macro_f1)
-        if macro_f1 > best_f1 :
-            best_f1 = macro_f1
-            early_stopping = 0                
-            # 保存模型
-            model_save_path = os.path.join(config['output_path'], f'checkpoint-{best_f1}')
-            # if os.path.exists(model_save_path):
-            #     os.remove(model_save_path)
-            print('model_save_path:', model_save_path)
-            # hasattr 用于判断对象是包含对应的属性，是返回true，否则返回false
-            model_to_save = model.module if hasattr(model, 'module') else model
-            print('\n>> model saved ... ...')
-            model_to_save.save_pretrained(model_save_path)
-            conf = json.dumps(config)
-            out_conf_path = os.path.join(config['output_path'], f'checkpoint-{best_f1}' +
-                                        '/train_config.json')
-            with open(out_conf_path, 'w', encoding='utf-8') as f:
-                f.write(conf)
+        # # 使用 f1_score 函数来计算值
+        # macro_f1 = cal_f1(all_preds, all_label)                
+        # print("macro_f1 = ",macro_f1)
+        # #if macro_f1 > best_f1 :
+        #     best_f1 = macro_f1                        
+        # 保存模型
+        model_save_path = os.path.join(config['output_path'], f'checkpoint-{epoch}')
+        # if os.path.exists(model_save_path):
+        #     os.remove(model_save_path)
+        print('model_save_path:', model_save_path)
+        # hasattr 用于判断对象是包含对应的属性，是返回true，否则返回false
+        model_to_save = model.module if hasattr(model, 'module') else model
+        print('\n>> model saved ... ...')
+        model_to_save.save_pretrained(model_save_path)
+        conf = json.dumps(config)
+        out_conf_path = os.path.join(config['output_path'], f'checkpoint-{epoch}' +
+                                    '/train_config.json')
+        with open(out_conf_path, 'w', encoding='utf-8') as f:
+            f.write(conf)
         # else:
         #     early_stopping += 1
         #     print(f"Counter {early_stopping} of {config['early_stopping']}")
