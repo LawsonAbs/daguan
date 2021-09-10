@@ -651,7 +651,7 @@ class Trainer:
         # Multi-gpu training (should be after apex fp16 initialization)
         if self.args.n_gpu > 1:
             # 是这里让模型可以放到三个GPU上训练
-            model = torch.nn.DataParallel(model,device_ids=[0, 1])
+            model = torch.nn.DataParallel(model,device_ids=[0,1])
 
         if not training:
             return model
@@ -909,6 +909,7 @@ class Trainer:
             )
             self.control = self.callback_handler.on_epoch_begin(self.args, self.state, self.control)
             epoch_loss = 0 # 记录一个epoch中的loss，因为每个batch 的loss 都比较小，而且波动比较大，所以这里使用一个epoch来记录
+            loss_in_5_batch = 0 # 每 50 个 batch 就输出一次loss
             for step, inputs in enumerate(epoch_iterator):
                 # Skip past any already trained steps if resuming training
                 if steps_trained_in_current_epoch > 0:
@@ -928,7 +929,7 @@ class Trainer:
                         tr_loss += self.training_step(model, inputs)
                 else:
                     cur_loss = self.training_step(model, inputs)
-                    epoch_loss += cur_loss
+                    loss_in_5_batch += cur_loss
                     tr_loss += cur_loss
                                 
                 global_step+=1
@@ -986,10 +987,10 @@ class Trainer:
                     self._maybe_log_save_evaluate(tr_loss, model, trial, epoch)
                 if self.control.should_epoch_stop or self.control.should_training_stop:
                     break
-            
-            # 因为这里
-            viz.line([epoch_loss.item()],[global_step],win="loss",update='append')
-            print(f"epoch = {epoch},cur_epoch_loss = {epoch_loss}")
+                if (step % 50) == 0 and step:
+                    viz.line([loss_in_5_batch.item()],[global_step],win="loss",update='append')                    
+                    print(f"epoch = {epoch},step = {step}, loss_in_5_batch = {loss_in_5_batch}")
+                    loss_in_5_batch = 0
             self.control = self.callback_handler.on_epoch_end(self.args, self.state, self.control)
 
 
