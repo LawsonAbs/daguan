@@ -1,9 +1,11 @@
+
 '''
 Author: LawsonAbs
 Date: 2021-09-04 22:07:40
 LastEditTime: 2021-09-05 19:37:39
 FilePath: /daguan/risk_data_grand/utils/test.py
 '''
+from queue import Queue
 def test():
     import pandas as pd
     pd.set_option('display.max_columns', None)
@@ -45,6 +47,15 @@ def get_vocab_map(vocab_path):
         print(key,value)
 
 
+def test_Queue():    
+    q = Queue(maxsize = 5)
+    for i in range(10):
+        q.put(i)
+        
+    print(q.get())
+    while ( q.empty()):
+        print(q.get())
+
 if __name__ == '__main__':
-    get_vocab_map("")
-    
+    # get_vocab_map("")
+    test_Queue() 
