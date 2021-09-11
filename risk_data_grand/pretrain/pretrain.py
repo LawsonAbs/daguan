@@ -77,13 +77,16 @@ def read_data(config, train_file_path, test_file_path, tokenizer: BertTokenizer)
 
 
 class LineByLineTextDataset(Dataset):
-    def __init__(self, tokenizer: PreTrainedTokenizer, train_file_path: str,  block_size: int):
+    def __init__(self, tokenizer: PreTrainedTokenizer,
+     train_file_path: str, 
+     block_size: int,
+     vocab_path
+     ):
         assert os.path.isfile(train_file_path), f"Input file path {train_file_path} not found"
     
         print(f"Creating features from dataset file at {train_file_path}")
         batch_encoding = []
         input_ids = []
-        vocab_path = "/home/lawson/program/daguan/bert-base-fgm/vocab.txt"
         vocab_map = {} # word => id
         index = 0
         # 写一个获取vocab映射的
@@ -154,7 +157,7 @@ def main():
     parser.add_argument("--train_fgm", default=False,type=boolean_string)
     parser.add_argument("--fgm_epsilon", default=1.0)
     parser.add_argument("--batch_size", default=8,type=int)
-    parser.add_argument("--num_epochs",default=200,type=int)
+    parser.add_argument("--num_epochs",default=100,type=int)
     parser.add_argument("--gradient_accumulation_steps", default=2,type=int)    
     parser.add_argument("--model_name", default="bert-base-fgm", type=str)
     parser.add_argument("--model_type",default="bert", type=str)
@@ -183,9 +186,9 @@ def main():
     print(f'use_fgm={use_fgm}')
     
     
-    model_path = "/home/lawson/program/daguan/pretrain_model/bert-base-fgm/2.4G_large_10000_128/pytorch_model.bin"
-    config_path = '/home/lawson/program/daguan/pretrain_model/bert-base-fgm/2.4G_large_10000_128/config.json'
-    vocab_file = "/home/lawson/program/daguan/pretrain_model/bert-base-fgm/2.4G_large_10000_128/vocab.txt"
+    model_path = "/home/lawson/program/daguan/pretrain_model/bert-base-fgm/2.4G+4.8M_large_10000_128_checkpoint-40000/pytorch_model.bin"
+    config_path = '/home/lawson/program/daguan/pretrain_model/bert-base-fgm/2.4G+4.8M_large_10000_128_checkpoint-40000/config.json'
+    vocab_file = "/home/lawson/program/daguan/pretrain_model/bert-base-fgm/2.4G+4.8M_large_10000_128_checkpoint-40000/vocab.txt"
     
     tokenizer = BertTokenizer.from_pretrained(vocab_file)
 
@@ -243,7 +246,7 @@ def main():
     dataset = LineByLineTextDataset(tokenizer=tokenizer,
                                     train_file_path=train_file_path,                                        
                                     block_size=seq_length,
-                                    
+                                    vocab_path =vocab_file
                                     )
     print('>> train data load end....')
     print('>> load data cost {} s'.format(time.time()- start_time))
