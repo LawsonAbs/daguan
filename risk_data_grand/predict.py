@@ -182,7 +182,7 @@ def main():
         'model_type': 'bert-base-fgm', # 加载模型文件夹                
         # 'vocab_path': '/home/lawson/program/daguan/risk_data_grand/model/best/vocab.txt',
         'test_path': '/home/lawson/program/daguan/risk_data_grand/data/test.txt', # 测试数据
-        'load_model_path': '/home/lawson/program/daguan/risk_data_grand/model/2.4G+4.4M_large_21000_128_checkpoint-0.5506169472782613', # 加载训练后的模型
+        'load_model_path': '/home/lawson/program/daguan/risk_data_grand/model/2.4G+4.4M_large_40000_128_checkpoint-10_all_train_data', # 加载训练后的模型
         'submit_path': 'submission.csv', # 提交结果的文件名
         'batch_size': 8,
         'max_seq_len': 128, 
