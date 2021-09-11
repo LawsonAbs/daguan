@@ -9,6 +9,7 @@ import nltk
 import sklearn
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.model_selection import train_test_split 
+from sklearn.metrics import f1_score
 import numpy as np
 import pylab as pl
 import matplotlib.pyplot as plt
@@ -185,10 +186,13 @@ def text_classifier(train_feature_list, dev_feature_list, train_class_list, dev_
         # for dev_feature in dev_feature_list:
         #     print classifier.predict(dev_feature)[0],
         # print ''                        
-        dev_accuracy = classifier.score(dev_feature_list, dev_class_list)
+        dev_predict = classifier.predict(dev_feature_list)
+        dev_macro_f1 = f1_score(dev_class_list,dev_predict,average='macro')
+
+        # dev_accuracy = classifier.score(dev_feature_list, dev_class_list)
     else:
         dev_accuracy = []
-    return classifier,dev_accuracy
+    return classifier,dev_macro_f1
 
 
 def other():
@@ -223,7 +227,7 @@ def other():
     print("end")
 
 
-# 获取某个类别下的高频词，top_k 取 100
+# 获取某个类别下的高频词，top_k 为前k个词
 def get_high_freq_word_in_class(data_path,top_k,invalid_words):    
     all_conts = [] # 所有的文本
     feature_words = set()  # 所有类的高频词构成的一个feature    
@@ -300,35 +304,40 @@ if __name__ == '__main__':
     data_path = "/home/lawson/program/daguan/risk_data_grand/data/small_json/word_freq.json"
     train_data_path = "/home/lawson/program/daguan/risk_data_grand/data/train.txt"
     test_data_path = "/home/lawson/program/daguan/risk_data_grand/data/test.txt"
-    # 获取高频无效词列表
-    invalid_words = read_invalid_words(data_path,top_k=50) 
+    max_dev_score = 0
 
-    # 获取某个类别下的高频词
-    feature_words = get_high_freq_word_in_class(data_path = train_data_path,top_k = 300,invalid_words = invalid_words)
-
-    # 读取数据集
-    train_data,labels = read_train_data(train_data_path)
-    # 先划分train + dev
-    x_train,x_dev,y_train,y_dev = train_test_split(train_data,labels,test_size=0.3,random_state=32,shuffle=True)
-    # print(x_train)
-    # 根据特征集合，找出每个训练文本的特征
-    
-    # 找出train,dev,test 的特征
-    train_feature_list  = text_features(x_train,feature_words)
-    dev_feature_list = text_features(x_dev,feature_words)
-
-    classifier,dev_accuracy = text_classifier(train_feature_list, dev_feature_list,y_train,y_dev)
-    print(dev_accuracy)
-
-    # test 数据
-    test_data = read_test_data(test_data_path)
-    test_feature_list = text_features(test_data,feature_words)
-    res = classifier.predict(test_feature_list)
-
-    # print(res)
-    label = [id2label[i] for i in res]
-    ids = [i for i in range(len(test_data))]
-    res = pd.DataFrame({'id':ids,
-                        'label':label})
-    submit_path = "submission_nb.csv"
-    res.to_csv(submit_path,index=False)
+    # 遍历超参取最好的模型
+    for invalid_k in range(50,400):
+        #step1. 获取高频无效词列表，为了防止影响效果
+        invalid_words = read_invalid_words(data_path,top_k=invalid_k) 
+        
+        # 获取所有类别下的高频词，组合成一个feature_words，词频
+        for valid_k in range(100,500):
+            feature_words = get_high_freq_word_in_class(data_path = train_data_path,top_k = valid_k,invalid_words = invalid_words)
+            
+            # step2. 读取数据集
+            train_data,labels = read_train_data(train_data_path)
+            # 先划分train + dev
+            x_train,x_dev,y_train,y_dev = train_test_split(train_data,labels,test_size=0.3,random_state=32,shuffle=True)
+            
+            # step3.根据特征集合，找出每个训练文本的特征
+            # 找出train,dev,test 的特征
+            train_feature_list  = text_features(x_train,feature_words)
+            dev_feature_list = text_features(x_dev,feature_words)
+            # test 数据
+            test_data = read_test_data(test_data_path)
+            test_feature_list = text_features(test_data,feature_words)
+            # step4.根据特征进行分类
+            classifier,dev_macro_f1 = text_classifier(train_feature_list, dev_feature_list,y_train,y_dev)
+            
+            if dev_macro_f1 > max_dev_score:
+                max_dev_score = dev_macro_f1
+                print(f"invalid_k={invalid_k},valid_k = {valid_k},dev_macro_f1={dev_macro_f1},",)
+                res = classifier.predict(test_feature_list)
+                # print(res)
+                label = [id2label[i] for i in res]
+                ids = [i for i in range(len(test_data))]
+                res = pd.DataFrame({'id':ids,
+                                    'label':label})
+                submit_path = "submission_nb.csv"
+                res.to_csv(submit_path,index=False)
