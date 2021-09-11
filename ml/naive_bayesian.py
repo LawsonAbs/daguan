@@ -339,5 +339,5 @@ if __name__ == '__main__':
                 ids = [i for i in range(len(test_data))]
                 res = pd.DataFrame({'id':ids,
                                     'label':label})
-                submit_path = "submission_nb.csv"
+                submit_path = f"submission_nb_{dev_macro_f1}.csv"
                 res.to_csv(submit_path,index=False)
