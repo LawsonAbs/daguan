@@ -54,11 +54,14 @@
             "type": "python",
             "request": "launch",
             "program": "ml/naive_bayesian.py",
-            "console": "integratedTerminal",
-            "args": [
-                
-            ]
+            "console": "integratedTerminal",            
+        },        
+        {
+            "name": "knn",
+            "type": "python",
+            "request": "launch",
+            "program": "ml/knn.py",
+            "console": "integratedTerminal",            
         }
-
     ]
 }
