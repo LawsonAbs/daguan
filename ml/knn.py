@@ -1,7 +1,7 @@
 '''
 Author: LawsonAbs
 Date: 2021-09-10 23:02:51
-LastEditTime: 2021-09-11 20:46:16
+LastEditTime: 2021-09-11 22:50:45
 FilePath: /daguan/ml/knn.py
 '''
 from torch.utils.data import Dataset, DataLoader
@@ -133,7 +133,8 @@ def knn(train_data,train_labels,dev_data,dev_labels,test_data,k):
     # step4.如果说，dev上面效果不错，那么就可以尝试对 test 做预测，并写入结果
     print(f"k={k},dev_macro_f1={dev_macro_f1}")
     submit_path = f"submission_knn_epoch={k}_{dev_macro_f1}.csv"
-    if dev_macro_f1 > max_macro_f1:        
+    if dev_macro_f1 > max_macro_f1: 
+        max_macro_f1 = dev_macro_f1       
         test_ids  = []
         test_cls = []
         idx = 0

@@ -62,6 +62,13 @@
             "request": "launch",
             "program": "ml/knn.py",
             "console": "integratedTerminal",            
+        },        
+        {
+            "name": "tools",
+            "type": "python",
+            "request": "launch",
+            "program": "risk_data_grand/utils/tools.py",
+            "console": "integratedTerminal",            
         }
     ]
 }

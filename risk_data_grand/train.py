@@ -203,6 +203,7 @@ def compute_kl_loss(p, q, pad_mask=None):
     loss = (p_loss + q_loss) / 2
     return loss
 
+# 用于对抗训练
 class FGM:
     def __init__(self, config, model):
         self.model = model
