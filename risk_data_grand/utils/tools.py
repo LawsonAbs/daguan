@@ -3,7 +3,7 @@ import pandas as pd
 '''
 Author: LawsonAbs
 Date: 2021-09-04 22:07:40
-LastEditTime: 2021-09-12 23:24:36
+LastEditTime: 2021-09-13 10:26:16
 FilePath: /daguan/risk_data_grand/utils/tools.py
 '''
 import os
@@ -185,31 +185,41 @@ def combine_submission(path_balance,path_ensemble):
         f.readline()
         for line in f:
             iid,label = line.strip("\n").split(",")
-            ensemble[iid] = label
+            balance[iid] = label
             
     with open(path_ensemble,'r' ) as f:
         f.readline()
         for line in f:
             iid,label = line.strip("\n").split(",")
-            balance[iid] = label
+            ensemble[iid] = label
     
     # 遍历其中的内容，合并两个结果
     res = {}
-    for i1,i2 in zip(ensemble,balance):
+    difference = 0
+    for i1,i2 in zip(ensemble.items(),balance.items()):
         iid1,label1 = i1
         iid2,label2 = i2
+        if label1 != label2:
+            difference +=1
         if label2 in less_clz: # 如果是少样本，则相信balance模型
             res[iid1] = label2
         else:
             res[iid1] = label1 # 如果是正常情况，则相信
+    print(f"difference = {difference}")
+    iid = list(res.keys())
+    labels = list(res.values())
 
-
-
-
+    temp = pd.DataFrame({'id':iid,
+                            'label':labels})
+    submit_path = "/home/lawson/program/daguan/submission_combine.csv"
+    temp.to_csv(submit_path,index=False)
         
 
 if __name__ == '__main__':
     # get_vocab_map("")
     # ensemble("/home/lawson/program/daguan/res")
     train_data_path = '/home/lawson/program/daguan/risk_data_grand/data/train.txt'
-    select_data(train_data_path)
+    ensemble_path = "/home/lawson/program/daguan/submission_ensemble.csv"
+    less_clz_path = "/home/lawson/program/daguan/submission_balance_rate_0.3.csv"
+    # select_data(train_data_path)
+    combine_submission(less_clz_path,ensemble_path)
