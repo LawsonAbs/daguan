@@ -42,6 +42,7 @@ class NeZhaSequenceClassification(BertPreTrainedModel):
         self.init_weights()
         self.multi_drop = 5
         self.multi_dropouts = nn.ModuleList([nn.Dropout(0.1) for _ in range(self.multi_drop)])
+        self.loss_fct = FocalLoss(35)
     def forward(
             self,
             input_ids=None,
@@ -72,10 +73,11 @@ class NeZhaSequenceClassification(BertPreTrainedModel):
         outputs = (logits,) + outputs[2:]
 
         if labels is not None:
-            loss_fct = LabelSmoothingLoss(smoothing=0.01)
+            #loss_fct = LabelSmoothingLoss(smoothing=0.01)
+            
             # loss_fct = nn.CrossEntropyLoss()
             # loss_fct = SparsemaxLoss()
-            loss = loss_fct(logits.view(-1, self.num_labels), labels.view(-1))
+            loss = self.loss_fct(logits.view(-1, self.num_labels), labels.view(-1))
             outputs = (loss,) + outputs
 
         return outputs
@@ -185,6 +187,61 @@ class LabelSmoothingLoss(nn.Module):
         smooth_loss = -log_probs.mean(dim=-1)
         loss = self.confidence * nll_loss + self.smoothing * smooth_loss
         return loss.mean()
+
+
+# 实现FocalLoss
+class FocalLoss(nn.Module):
+    r'''
+    alpha(1D Tensor, Variable) : the scalar factor for this criterion
+    gamma(float, double) : gamma > 0; reduces the relative loss for well-classiﬁed examples (p > .5), 
+                            putting more focus on hard, misclassiﬁed examples
+    size_average(bool): By default, the losses are averaged over observations for each minibatch.
+                        However, if the field size_average is set to False, the losses are
+                        instead summed for each minibatch.
+    '''
+    # size_average 是什么参数？
+    def __init__(self, class_num,alpha=None,gamma=2,size_average=True):
+        super().__init__()
+        self.gamma = 2
+        self.class_num = class_num
+        self.size_average = size_average
+        if alpha is None: # 这里的self.alpha 是torch
+            self.alpha = torch.ones(class_num, 1).cuda() # size = [class_num,1]
+        else:
+            self.alpha = alpha
+
+    def forward(self, inputs,targets):
+        # 得到batch 和 class_num
+        N = inputs.size(0) # batch_size 
+        C = inputs.size(1) # class_num
+        P = F.softmax(inputs) # 对输入做softmax，得到每个类别的logits
+        # sf = torch.nn.Softmax()
+        class_mask = inputs.data.new(N, C).fill_(0) # 按照inputs的shape创建一个初始值为0【可指定】的tensor
+        # class_mask = Variable(class_mask)
+        ids = targets.view(-1, 1) # 由一维变二维
+        class_mask.scatter_(1, ids.data, 1.)
+        #print(class_mask)
+
+        if inputs.is_cuda and not self.alpha.is_cuda:
+            self.alpha = self.alpha.cuda()
+        alpha = self.alpha[ids.data.view(-1)] # 将alpha 的形状适配成inputs的 size = > (batch_size,1)
+
+        probs = (P*class_mask).sum(1).view(-1,1)
+
+        log_p = probs.log()
+        #print('probs size= {}'.format(probs.size()))
+        #print(probs)
+
+        batch_loss = -alpha*(torch.pow((1-probs), self.gamma))*log_p 
+        #print('-----bacth_loss------')
+        #print(batch_loss)
+
+        if self.size_average:
+            loss = batch_loss.mean()
+        else:
+            loss = batch_loss.sum()
+        return loss
+
 
 def compute_kl_loss(p, q, pad_mask=None):
     
@@ -363,7 +420,7 @@ def train():
         'normal_data_cache_path': '',  # 保存训练数据 下次加载更快
         'data_path': '/home/lawson/program/daguan/risk_data_grand/data/train.txt', # 训练数据
         'output_path': '/home/lawson/program/daguan/risk_data_grand/model', # fine-tuning后保存模型的路径
-        'model_path': '/home/lawson/program/daguan/pretrain_model/bert-base-fgm/2.4G+4.8M_large_10000_128_checkpoint-40000', # your pretrain model path => 使用large
+        'model_path': '/home/lawson/program/daguan/pretrain_model/bert-base-fgm/final_whole/', # your pretrain model path => 使用large
         'shuffle_way': 'block_shuffle',  # block_shuffle 还是 random shuffle         
         'use_swa': True, # 目前没有用到？？？
         'tokenizer_fast': False, 
@@ -379,7 +436,7 @@ def train():
         'warmup_ratio': 0.1,
         'weight_decay': 0.01,
         'device': 'cuda',
-        'logging_step': 500, # 每500步打印logger
+        'logging_step': 50, # 每500步打印logger
         'seed': 124525601, # 随机种子 
         'fold': 5 # k-flod
         }
