@@ -3,7 +3,7 @@ import pandas as pd
 '''
 Author: LawsonAbs
 Date: 2021-09-04 22:07:40
-LastEditTime: 2021-09-13 10:26:16
+LastEditTime: 2021-09-14 17:14:49
 FilePath: /daguan/risk_data_grand/utils/tools.py
 '''
 import os
@@ -139,10 +139,10 @@ def data_augment():
     pass
 
 # 从train.txt中按照类别随机选择数据，使得数据集在类别中达到分布均衡
-def select_data(data_path):
-    rate = 0.3 # 除了少数标签的类别外，按照0.3 的比率取值
-    less_clz_ = ['8-27','6-20','7-16','8-18','9-23','10-26','3-5'] # 少数目的类别
-    less_clz_id = ['22','14','12','8','17','4','25']
+# # 除了少数标签的类别外，按照0.3 的比率取值
+def select_data(data_path,rate):
+    less_clz_ = ['8-27','6-20','7-16','8-18','9-23','10-26','3-5','5-24'] # 少数目的类别
+    less_clz_id = ['22','14','12','8','17','4','25','0']
     select_cont = [] # 被选中的内容    
     clz_data = {} # 每个类对应的数据
 
@@ -177,7 +177,7 @@ def select_data(data_path):
 
 # 合并submission，将submission_balance.txt 和 submission_ensemble.txt 合并成一个文件。合并原则是：如果 submission_balance.txt 中预测的样本是少样本，则采取该类别，否则使用submission_ensemble.txt 中的内容
 def combine_submission(path_balance,path_ensemble):
-    less_clz = ['8-27','6-20','7-16','8-18','9-23','10-26','3-5'] # 少数目的类别
+    less_clz = ['8-27','6-20','7-16','8-18','9-23','10-26','3-5','5-24'] # 少数目的类别
     ensemble = {}
     balance = {}
 
@@ -215,11 +215,16 @@ def combine_submission(path_balance,path_ensemble):
     temp.to_csv(submit_path,index=False)
         
 
+# 计算各个数据的权重，然后将其作为loss的权重
+def get_weight():
+    
+    pass
+
 if __name__ == '__main__':
     # get_vocab_map("")
     # ensemble("/home/lawson/program/daguan/res")
     train_data_path = '/home/lawson/program/daguan/risk_data_grand/data/train.txt'
     ensemble_path = "/home/lawson/program/daguan/submission_ensemble.csv"
-    less_clz_path = "/home/lawson/program/daguan/submission_balance_rate_0.3.csv"
-    # select_data(train_data_path)
-    combine_submission(less_clz_path,ensemble_path)
+    less_clz_path = "/home/lawson/program/daguan/submission_balance_rate_0.5.csv"
+    select_data(train_data_path,rate=0)
+    # combine_submission(less_clz_path,ensemble_path)
