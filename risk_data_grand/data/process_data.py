@@ -1,4 +1,6 @@
 # coding:utf-8
+from math import log
+from collections import Counter 
 from tqdm import tqdm
 import json
 import time
@@ -258,24 +260,33 @@ def get_all_num(path):
 
 
 # 查看类别是否均衡， 并将所有的每类数据放到专属文件中
-def statisfy(path):
-    cls_id = {}
-    all = 0
+# 统计数据信息，最后计算出权重值
+def statistic(path):
+    cls_id = Counter() # 定义一个计数器
+    all = 0 
+    weight = [] #  计算出每个类的权重
     with open(path,'r') as f:
         for line in f:
             line = line.strip("\n")
             line = line.split("\t")
             num = line[-1] # 最后一个为类别
-            if num not in cls_id.keys():
-                cls_id[num] = 1
-            else:
-                cls_id[num] +=1
-            all+=1
-    cls_id = sorted(cls_id.items(),key= lambda x: x[1],reverse=True) 
-    print("all=",all)
+            cls_id[num]+=1 # 避免查找值
+            all+=1 # 所有类别的个数
+    cls_num = 35
+    cls_id = sorted(cls_id.items(),key= lambda x: x[1],reverse=True)
+
+    for item in cls_id:
+        key,value = item
+        cur_wei = (all/(cls_num*value))  # 小数除
+        weight.append(cur_wei)
+    print("all =",all)
     for item in cls_id:
         key,value = item
         print(id_label[int(key)],value,value/all,value/all*6005)
+
+    print(weight)
+    return weight
+
 
 # 分析提交结果
 def analysis_submission(path):
@@ -301,13 +312,14 @@ if __name__ == '__main__':
     # split_data()
     # readTxt("/home/lawson/program/daguan/risk_data_grand/data/datagrand_2021_unlabeled_data.json")
     # get_all_num("/home/lawson/program/daguan/risk_data_grand/data/datagrand_2021_unlabeled_data.json")
-    # statisfy("/home/lawson/program/daguan/risk_data_grand/data/train.txt")
+    statistic("/home/lawson/program/daguan/risk_data_grand/data/train.txt")
     # 将
     # index = [i for i in range(35)]
     # id_label = dict(zip(index,id_label))
     # print(id_label)
     # analysis_submission("submission_0906.csv")
-    train_path = "/home/lawson/program/daguan/risk_data_grand/data/train.txt"
-    test_path = "/home/lawson/program/daguan/risk_data_grand/data/test.txt"
-    out_path = "/home/lawson/program/daguan/risk_data_grand/data/all.txt"
-    concat_data(train_path, test_path, out_path)
+    # train_path = "/home/lawson/program/daguan/risk_data_grand/data/train.txt"
+    # test_path = "/home/lawson/program/daguan/risk_data_grand/data/test.txt"
+    # out_path = "/home/lawson/program/daguan/risk_data_grand/data/all.txt"
+    # concat_data(train_path, test_path, out_path)
+    
