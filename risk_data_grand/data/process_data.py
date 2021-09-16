@@ -1,4 +1,8 @@
 # coding:utf-8
+import torch as t
+import torch.nn as nn
+from collections import Counter
+from random import random
 from math import log
 from collections import Counter 
 from tqdm import tqdm
@@ -178,7 +182,7 @@ def convert_data():
     print(f'cost time={time.time()-start_time} s')
 
 
-# 将无标签数据分割成均匀样本
+# 将无标签数据分割成均匀小份
 def split_data():
     source = "/home/lawson/program/daguan/risk_data_grand/data/datagrand_2021_unlabeled_data.json"
     temp = []
@@ -264,7 +268,7 @@ def get_all_num(path):
 def statistic(path):
     cls_id = Counter() # 定义一个计数器
     all = 0 
-    weight = [] #  计算出每个类的权重
+    id_weight = {} #  计算出每个类的权重
     with open(path,'r') as f:
         for line in f:
             line = line.strip("\n")
@@ -278,14 +282,28 @@ def statistic(path):
     for item in cls_id:
         key,value = item
         cur_wei = (all/(cls_num*value))  # 小数除
-        weight.append(cur_wei)
+        id_weight[int(key)] = cur_wei
     print("all =",all)
     for item in cls_id:
         key,value = item
         print(id_label[int(key)],value,value/all,value/all*6005)
 
-    print(weight)
-    return weight
+    id_weight = sorted(id_weight.items(),key=lambda x:x[0])
+    weigths = []
+    for i in id_weight:
+        a,b = i
+        # print(a,"=>","%.0f"%b)
+        if b > 1:
+            b = log(b) + 1
+        print("%.4f"%b,end=',')
+        weigths.append(b)
+    # sm = nn.Softmax(dim=-1)
+    # res = sm(t.tensor(weigths)).tolist()
+    # print(res)
+    # for i in res:
+    #     print("%.5f"%i)
+    
+    return id_weight
 
 
 # 分析提交结果
@@ -306,13 +324,15 @@ def analysis_submission(path):
         key,value = item
         print(key,value,value/6005)
 
+            
+
 
 if __name__ == '__main__':
     # convert_data()
     # split_data()
     # readTxt("/home/lawson/program/daguan/risk_data_grand/data/datagrand_2021_unlabeled_data.json")
     # get_all_num("/home/lawson/program/daguan/risk_data_grand/data/datagrand_2021_unlabeled_data.json")
-    statistic("/home/lawson/program/daguan/risk_data_grand/data/train.txt")
+    # statistic("/home/lawson/program/daguan/risk_data_grand/data/train.txt")
     # 将
     # index = [i for i in range(35)]
     # id_label = dict(zip(index,id_label))
@@ -322,4 +342,9 @@ if __name__ == '__main__':
     # test_path = "/home/lawson/program/daguan/risk_data_grand/data/test.txt"
     # out_path = "/home/lawson/program/daguan/risk_data_grand/data/all.txt"
     # concat_data(train_path, test_path, out_path)
-    
+    label_dict = {'5-24': 0, '6-34': 1, '1-1': 2, '6-8': 3, '10-26': 4, '2-3': 5, '5-22': 6, '6-28': 7, '8-18': 8, '1-4': 9, '2-6': 10, '6-21': 11, 
+              '7-16': 12, '6-29': 13, '6-20': 14, '6-15': 15, '6-13': 16, '9-23': 17, '5-35': 18, '2-33': 19, '5-30': 20, '1-9': 21, '8-27': 22, 
+              '1-10': 23, '6-19': 24, '3-5': 25, '2-2': 26, '4-7': 27, '2-17': 28, '5-12': 29, '6-32': 30, '6-31': 31, '2-25': 32, '2-11': 33, '2-14': 34}
+    for item in label_dict.items():
+        key,valu = item
+        print(key)
