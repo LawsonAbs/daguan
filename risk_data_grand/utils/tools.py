@@ -3,7 +3,7 @@ import pandas as pd
 '''
 Author: LawsonAbs
 Date: 2021-09-04 22:07:40
-LastEditTime: 2021-09-14 17:14:49
+LastEditTime: 2021-09-16 10:36:57
 FilePath: /daguan/risk_data_grand/utils/tools.py
 '''
 import os
@@ -59,17 +59,7 @@ def get_vocab_map(vocab_path):
         print(key,value)
 
 
-def test_Queue():    
-    q = Queue(maxsize = 5)
-    for i in range(10):
-        q.put(i)
-        
-    print(q.get())
-    while ( q.empty()):
-        print(q.get())
-
-
-# 读取所有训练数据，并返回其中
+# 读取所有训练数据，并返回其内容和标签
 def read_train_data(data_path):        
     all_cont = []
     labels = [] # 序号id
@@ -84,6 +74,37 @@ def read_train_data(data_path):
             labels.append(int(label))
     return all_cont,labels
 
+
+# 按照类别将train中的内容写到各个文件夹中
+def get_files_in_class(data_path):
+    train_data_path = os.path.join(data_path,"train.txt") # 拼凑得到最后的文件
+    id_cont = {} # id=> cont list
+
+    with open(train_data_path,'r') as f:
+        for row in f:
+            temp = row.strip("\n").split("\t")
+            cur_cont = temp[1] # 得到当前行的内容
+            label = temp[2]            
+            if label not in id_cont.keys():
+                id_cont[label] =[]
+            id_cont[label].append(cur_cont)
+    
+    # 遍历当前所有的类别，然后生成文件夹+文件
+    for item in id_cont.items():
+        label,cont_list = item                
+        idx = 0
+        cur_file_dir = os.path.join(data_path,label) # 生成类别信息文件夹
+        if os.path.exists(cur_file_dir):
+            os.removedirs(cur_file_dir) # 删除dir
+        if not os.path.exists(cur_file_dir):
+            os.makedirs(cur_file_dir)
+        
+        for cont in cont_list: # 按照内容，逐行写入
+            cur_file_path = os.path.join(cur_file_dir,str(idx)+".txt")
+            with open(cur_file_path,'w') as f:
+                f.write(cont)
+                idx+=1
+    
 
 # 读取所有测试数据
 def read_test_data(data_path):
@@ -215,10 +236,11 @@ def combine_submission(path_balance,path_ensemble):
     temp.to_csv(submit_path,index=False)
         
 
-# 计算各个数据的权重，然后将其作为loss的权重
-def get_weight():
-    
-    pass
+# 计算各个类别数据的权重，然后计算出其 loss的权重
+def get_weight(train_path):
+    with open(train_path,'r') as f:
+                
+        pass
 
 if __name__ == '__main__':
     # get_vocab_map("")
@@ -226,5 +248,7 @@ if __name__ == '__main__':
     train_data_path = '/home/lawson/program/daguan/risk_data_grand/data/train.txt'
     ensemble_path = "/home/lawson/program/daguan/submission_ensemble.csv"
     less_clz_path = "/home/lawson/program/daguan/submission_balance_rate_0.5.csv"
-    select_data(train_data_path,rate=0)
+    # select_data(train_data_path,rate=0)
     # combine_submission(less_clz_path,ensemble_path)
+    data_path = '/home/lawson/program/daguan/risk_data_grand/data'
+    get_files_in_class(data_path)
