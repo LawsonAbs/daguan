@@ -3,7 +3,7 @@ import pandas as pd
 '''
 Author: LawsonAbs
 Date: 2021-09-04 22:07:40
-LastEditTime: 2021-09-16 10:36:57
+LastEditTime: 2021-09-17 09:35:03
 FilePath: /daguan/risk_data_grand/utils/tools.py
 '''
 import os
@@ -92,10 +92,11 @@ def get_files_in_class(data_path):
     # 遍历当前所有的类别，然后生成文件夹+文件
     for item in id_cont.items():
         label,cont_list = item                
+        label = int(label)
         idx = 0
-        cur_file_dir = os.path.join(data_path,label) # 生成类别信息文件夹
-        if os.path.exists(cur_file_dir):
-            os.removedirs(cur_file_dir) # 删除dir
+        cur_file_dir = os.path.join(data_path,id2label[label]) # 生成类别信息文件夹
+        # if os.path.exists(cur_file_dir):
+        #     os.removedirs(cur_file_dir) # 删除dir TODO 需要强制删除dir
         if not os.path.exists(cur_file_dir):
             os.makedirs(cur_file_dir)
         
@@ -236,11 +237,6 @@ def combine_submission(path_balance,path_ensemble):
     temp.to_csv(submit_path,index=False)
         
 
-# 计算各个类别数据的权重，然后计算出其 loss的权重
-def get_weight(train_path):
-    with open(train_path,'r') as f:
-                
-        pass
 
 if __name__ == '__main__':
     # get_vocab_map("")
