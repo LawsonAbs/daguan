@@ -1,4 +1,6 @@
 # coding:utf-8
+import re
+import os
 import torch as t
 import torch.nn as nn
 from collections import Counter
@@ -276,6 +278,11 @@ def statistic(path):
             num = line[-1] # 最后一个为类别
             cls_id[num]+=1 # 避免查找值
             all+=1 # 所有类别的个数
+    cls_id = dict(cls_id)
+    print(cls_id)
+    for l in id_label.keys():
+        
+        print(cls_id[str(l)])
     cls_num = 35
     cls_id = sorted(cls_id.items(),key= lambda x: x[1],reverse=True)
 
@@ -324,9 +331,56 @@ def analysis_submission(path):
         key,value = item
         print(key,value,value/6005)
 
-            
+
+# 从unlable 文档中抽取出所有的
+def get_all_title_from_unlabel(unlabel_data_path):
+    all_title= [] # 
+    source = "/home/lawson/program/daguan/risk_data_grand/data/datagrand_2021_unlabeled_data.json"
+    dest = "/home/lawson/program/daguan/risk_data_grand/data/unlabel_title.txt"
+    with open(source,'r',errors='ignore') as f:
+        line = f.readline()
+        while line:
+            line = json.loads(line,strict=False)
+            # print(line)
+            title = line['title']            
+            all_title.append(title)
+    
+    with open(dest,'w') as f:
+        for line in all_title:
+            f.write(line+"\n")
 
 
+# 从少样本中找出高频词，作为这类文本的标识
+def get_special_token_from_less_sample(dir_path,high_freq_file):    
+    file_list= os.listdir(dir_path)
+    all_words = [] # 少样本中出现的词汇
+    for file in file_list:
+        cur_file_path = os.path.join(dir_path,file)
+        with open(cur_file_path, 'r') as f:
+            for line in f:
+                line = line.strip("\n")
+                line = re.split(r"[，。！？ ]",line)
+                line = [_ for _ in line if _ !=""]
+                all_words.extend(line)
+                # print(line)
+                break
+    word_cnt = Counter(all_words)
+    # print(word_cnt)
+
+    # 再去除高频词
+    high_word_freq = {} # 读取高频词列表
+    with open(high_freq_file, 'r') as f:        
+        cont = json.load(f)
+        # print(cont)
+    
+    print(type(cont))
+    cont = dict(cont)
+    for item in cont.items():
+        key,value = item
+        high_word_freq[key] =value
+    print(high_word_freq)
+
+    
 if __name__ == '__main__':
     # convert_data()
     # split_data()
@@ -342,9 +396,11 @@ if __name__ == '__main__':
     # test_path = "/home/lawson/program/daguan/risk_data_grand/data/test.txt"
     # out_path = "/home/lawson/program/daguan/risk_data_grand/data/all.txt"
     # concat_data(train_path, test_path, out_path)
-    label_dict = {'5-24': 0, '6-34': 1, '1-1': 2, '6-8': 3, '10-26': 4, '2-3': 5, '5-22': 6, '6-28': 7, '8-18': 8, '1-4': 9, '2-6': 10, '6-21': 11, 
-              '7-16': 12, '6-29': 13, '6-20': 14, '6-15': 15, '6-13': 16, '9-23': 17, '5-35': 18, '2-33': 19, '5-30': 20, '1-9': 21, '8-27': 22, 
-              '1-10': 23, '6-19': 24, '3-5': 25, '2-2': 26, '4-7': 27, '2-17': 28, '5-12': 29, '6-32': 30, '6-31': 31, '2-25': 32, '2-11': 33, '2-14': 34}
-    for item in label_dict.items():
-        key,valu = item
-        print(key)
+    # label_dict = {'5-24': 0, '6-34': 1, '1-1': 2, '6-8': 3, '10-26': 4, '2-3': 5, '5-22': 6, '6-28': 7, '8-18': 8, '1-4': 9, '2-6': 10, '6-21': 11, 
+    #           '7-16': 12, '6-29': 13, '6-20': 14, '6-15': 15, '6-13': 16, '9-23': 17, '5-35': 18, '2-33': 19, '5-30': 20, '1-9': 21, '8-27': 22, 
+    #           '1-10': 23, '6-19': 24, '3-5': 25, '2-2': 26, '4-7': 27, '2-17': 28, '5-12': 29, '6-32': 30, '6-31': 31, '2-25': 32, '2-11': 33, '2-14': 34}
+    # for item in label_dict.items():
+    #     key,valu = item
+    #     print(key)
+    get_special_token_from_less_sample(dir_path="/home/lawson/program/daguan/risk_data_grand/data/3-5",
+                                        high_freq_file="/home/lawson/program/daguan/risk_data_grand/data/small_json/word_freq.json")
