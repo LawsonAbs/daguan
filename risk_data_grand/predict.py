@@ -24,6 +24,17 @@ label_dict = {'5-24': 0, '6-34': 1, '1-1': 2, '6-8': 3, '10-26': 4, '2-3': 5, '5
 label_list = ['5-24', '6-34', '1-1', '6-8', '10-26', '2-3', '5-22', '6-28', '8-18', '1-4', '2-6', '6-21', '7-16', '6-29', '6-20', 
               '6-15', '6-13', '9-23', '5-35', '2-33', '5-30', '1-9', '8-27', '1-10', '6-19', '3-5', '2-2', '4-7', '2-17', '5-12', 
               '6-32', '6-31', '2-25', '2-11', '2-14']
+
+bad_clz2id={'6-20': 0, '5-24': 1, '1-1': 2, '6-8': 3, '5-22': 4, '6-13': 5, '1-9': 6, '6-31': 7, '2-11': 8, '2-14': 9, '6-19': 10, '6-28': 11, '4-7': 12, '3-5': 13, '8-27': 14, '7-16': 15, '8-18': 16, '9-23': 17, '10-26': 18, '2-17': 19}
+
+bad_id2clz = {0: '6-20', 1: '5-24', 2: '1-1', 3: '6-8', 4: '5-22', 5: '6-13', 6: '1-9', 7: '6-31', 8: '2-11', 9: '2-14', 10: '6-19', 11: '6-28', 12: '4-7', 13: '3-5', 14: '8-27', 15: '7-16', 16: '8-18', 17: '9-23', 18: '10-26', 19: '2-17'}
+
+bad_clz = ['6-20','5-24','1-1','6-8','5-22','6-13',
+            '1-9','6-31','2-11','2-14','6-19','6-28','4-7',  # 13
+
+        # less sample                 
+            '3-5','8-27','7-16','8-18','9-23','10-26','2-17' # 7
+            ]
 class NeZhaSequenceClassification(BertPreTrainedModel):
     def __init__(self, config):
         super().__init__(config)
@@ -172,6 +183,7 @@ def predict(dataset, pre_model, config):
 
     predict_all = predict_all.tolist()
     label = [label_list[label] for label in predict_all]
+    # label = [bad_clz[label] for label in predict_all]
     res = pd.DataFrame({'id':id,
                         'label':label})
     res.to_csv(config['submit_path'],index=False)
@@ -182,8 +194,8 @@ def main():
         'model_type': 'bert-base-fgm', # 加载模型文件夹                
         # 'vocab_path': '/home/lawson/program/daguan/risk_data_grand/model/best/vocab.txt',
         'test_path': '/home/lawson/program/daguan/risk_data_grand/data/test.txt', # 测试数据
-        'load_model_path': '/home/lawson/program/daguan/risk_data_grand/model/2.4G+4.4M_large_40000_128_checkpoint-10_all_train_data', # 加载训练后的模型
-        'submit_path': 'submission.csv', # 提交结果的文件名
+        'load_model_path': '/home/lawson/program/daguan/risk_data_grand/model/2.4G+4.8M_large_10000_128_40000_checkpoint-60000_epoch_9_0.5401841579869628', # 加载训练后的模型
+        'submit_path': 'submission_60000_9.csv', # 提交结果的文件名
         'batch_size': 8,
         'max_seq_len': 128, 
         'device': 'cuda',
@@ -194,13 +206,13 @@ def main():
     localtime_start = time.asctime(time.localtime(time.time()))
     print(">> program start at:{}".format(localtime_start))
         
-    config['normal_data_cache_path'] = '/home/lawson/program/daguan/user_data/processed/' + config['model_type'] + '/test_data.pkl'
+    # config['normal_data_cache_path'] = '/home/lawson/program/daguan/user_data/processed/' + config['model_type'] + '/test_data.pkl'
     
-    if not os.path.exists(config['normal_data_cache_path']):
-        test_set = read_dataset(config)
-    else:
-        with open(config['normal_data_cache_path'], 'rb') as f:
-            test_set = pickle.load(f)
+    # if not os.path.exists(config['normal_data_cache_path']):
+    test_set = read_dataset(config)
+    # else:
+    #     with open(config['normal_data_cache_path'], 'rb') as f:
+    #         test_set = pickle.load(f)
 
     print("\n>> start predict ... ...")
     
