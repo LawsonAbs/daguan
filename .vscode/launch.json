@@ -69,6 +69,14 @@
             "request": "launch",
             "program": "risk_data_grand/utils/tools.py",
             "console": "integratedTerminal",            
+        },        
+        {
+            "name": "test",
+            "type": "python",
+            "request": "launch",
+            "program": "risk_data_grand/utils/test.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
         }
     ]
 }
