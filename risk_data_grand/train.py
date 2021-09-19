@@ -1,6 +1,5 @@
 import collections
-
-
+from sklearn.metrics import classification_report
 from collections import Counter
 from sklearn.model_selection import train_test_split
 import sys
@@ -36,11 +35,22 @@ from modeling.bert.modeling_bert import BertModel, BertPreTrainedModel
 from sparse_max.sparsemax import SparsemaxLoss
 from sklearn.model_selection import StratifiedKFold,KFold
 
+label_dict = {'5-24': 0, '6-34': 1, '1-1': 2, '6-8': 3, '10-26': 4, '2-3': 5, '5-22': 6, '6-28': 7, '8-18': 8, '1-4': 9, '2-6': 10, '6-21': 11, 
+              '7-16': 12, '6-29': 13, '6-20': 14, '6-15': 15, '6-13': 16, '9-23': 17, '5-35': 18, '2-33': 19, '5-30': 20, '1-9': 21, '8-27': 22, 
+              '1-10': 23, '6-19': 24, '3-5': 25, '2-2': 26, '4-7': 27, '2-17': 28, '5-12': 29, '6-32': 30, '6-31': 31, '2-25': 32, '2-11': 33, '2-14': 34}
+label_list = ['5-24', '6-34', '1-1', '6-8', '10-26', '2-3', '5-22', '6-28', '8-18', '1-4', '2-6', '6-21', '7-16', '6-29', '6-20', 
+              '6-15', '6-13', '9-23', '5-35', '2-33', '5-30', '1-9', '8-27', '1-10', '6-19', '3-5', '2-2', '4-7', '2-17', '5-12', 
+              '6-32', '6-31', '2-25', '2-11', '2-14']
+bad_clz = ['6-20','5-24','1-1','6-8','5-22','6-13',
+            '1-9','6-31','2-11','2-14','6-19','6-28','4-7',  # 13
 
+        # less sample                 
+            '3-5','8-27','7-16','8-18','9-23','10-26','2-17' # 7
+            ]
 
 # 分割成train - dev 
-# 其实完全没有必要手写这个方法，可以使用 sklearn.model_selection 中的 StratifiedKFold 来实现 => 后来发现还是得手写，
-# 函数分割得到的还是不行
+# 其实完全没有必要手写这个方法，可以使用 sklearn.model_selection 中的 StratifiedKFold 来实现 => 
+# 后来发现还是得手写，函数分割得到的结果还是不行
 def split_data_by_class(x,y,rate,seed=22):
     '''
     x,y 表示训练数据的输入和标签
@@ -48,9 +58,9 @@ def split_data_by_class(x,y,rate,seed=22):
     rate表示dev所占数据的比例，如果不足1条，则按1条处理
 
     returns:
-        x_train,y_train,x_dev,y_dev
+        train_idx,dev_idx
     '''    
-    # 先shuffle一下再说    
+    # 先shuffle一下再说，保持相同的shuffle  
     random.seed(seed)
     random.shuffle(y)
     random.seed(seed)
@@ -59,28 +69,38 @@ def split_data_by_class(x,y,rate,seed=22):
     cont_id = {} # 每个类别都放到一个list中    
     # 保持每个类别划分相同
     for i in range(len(y)):
-        y_idx = y[i]
+        y_idx = y[i] # y_idx是个分类值
         if y_idx not in cont_id.keys():
             cont_id[y_idx] = []
-        cont_id[y_idx].append(i) # 将内容放到其中
+        cont_id[y_idx].append(i) # 将该类别的下标放到其中
     
-    train_idx,dev_idx = [],[] # 最后返回的值
-    # 保持均匀抽取，一共有35个类
+    train_idx,dev_idx = [],[] # 最后返回的值，是一个下标
+    # 保持按照类别均匀抽取
     for item in cont_id.items():
-        key,value = item
-        mid = int(len(value)*rate)  # 这里往后加一
-        if mid == 0: # 如果只有0，那么就得将其改成1
-            mid = 1
-        for i in range(mid): # 按照个数取前 rate * len(value) 个
-            dev_idx.append(value[i]) 
-
-        for i in range(mid,len(value)): # 从上次的开始
-            train_idx.append(value[i])
-    # 得到值后再次shuffle，避免输出大块相同的值
+        key,value = item # key 是类别信息，value是该类别的所有（在y中）下标
+        if len(value) >= 2: # 如果当前类别的样本数大于2，才分成dev
+            mid = int(len(value)*rate)
+            if mid == 0: # 如果只有0，那么就得将其改成1
+                mid = 1
+            for i in range(mid): # 按照个数取前 rate * len(value) 个
+                dev_idx.append(value[i])         
+            for i in range(mid,len(value)): # 从上次的开始，作为train 集合
+                train_idx.append(value[i])
+        else:            
+             train_idx.extend(value) # 将整个值都作为train
+    
+    # 得到值后再次shuffle，避免输出连续相同的值
     random.seed(seed)
     random.shuffle(train_idx)
     random.seed(seed)
     random.shuffle(dev_idx)
+    
+    # 需要判断一下最后返回的dev_idx 的长度是否符合要求，如果不合要求，则要随机再抽取一点儿到其中
+    while len(dev_idx) < len(train_idx) * rate:
+        idx = random.choice(train_idx)        
+        dev_idx.append(idx) # 放到dev中
+        train_idx.remove(idx) # 删除这个idx
+
     return train_idx,dev_idx # 返回train/dev 数据所在的下标
 
 
@@ -88,12 +108,30 @@ class NeZhaSequenceClassification(BertPreTrainedModel):
     def __init__(self, config):
         super().__init__(config)
         self.num_labels = 35
+        # self.num_labels = 20
         self.bert = BertModel(config) 
         self.classifier = nn.Linear(config.hidden_size, self.num_labels)
         self.init_weights()
         self.multi_drop = 5
         self.multi_dropouts = nn.ModuleList([nn.Dropout(0.1) for _ in range(self.multi_drop)])
-        self.loss_fct = FocalLoss(35)
+        self.loss_fct = FocalLoss(35,
+        # alpha=torch.tensor([6.4558,2.5173,0.3665,1.3661,22.2365,
+        #                     0.4059,1.6205,1.7949,20.0129,0.5009,
+        #                     0.4911,2.9870,12.5080,1.2392,12.1290,
+        #                     0.6274,2.1636,21.0662,1.0617,0.6773,
+        #                     0.3105,0.2073,8.1685,0.6435,2.2486,
+        #                     25.0161,0.5438,0.6414,2.2742,1.9525,
+        #                     3.8860,2.5658,1.6747,1.1180,1.4244]))
+
+
+        alpha = torch.tensor([2.8650,1.9232,0.3665,1.3119,4.1017,
+                            0.4059,1.4827,1.5849,3.9964,0.5009,
+                            0.4911,2.0943,3.5264,1.2145,3.4956,
+                            0.6274,1.7718,4.0477,1.0599,0.6773,
+                            0.3105,0.2073,3.1003,0.6435,1.8103,
+                            4.2195,0.5438,0.6414,1.8216,1.6691,
+                            2.3574,1.9423,1.5156,1.1116,1.3538])
+                            )
     def forward(
             self,
             input_ids=None,
@@ -225,18 +263,21 @@ class LabelSmoothingLoss(nn.Module):
     NLL loss with label smoothing.
     weight = t.ones[]
     """
-    # 这里的smoothing 应该再往大一点儿调，0.01 太小了。=> 改到0.1
-    def __init__(self, smoothing=0.1):
+    # 这里的smoothing 应该再往大一点儿调，0.01 太小了。
+    def __init__(self, smoothing=0.01,weight=None):
         super(LabelSmoothingLoss, self).__init__()
         self.confidence = 1.0 - smoothing
         self.smoothing = smoothing
+        self.weight = weight
 
     def forward(self, x, target):
         log_probs = torch.nn.functional.log_softmax(x, dim=-1)
         # step1. 得到NLLLoss，也就是CrossEntropy 计算的值
         nll_loss = -log_probs.gather(dim=-1, index=target.unsqueeze(1))
+        
+        # 使用weight计算损失
         nll_loss = nll_loss.squeeze(1)
-
+        
         # step2. => 取均值
         smooth_loss = -log_probs.mean(dim=-1)
 
@@ -245,7 +286,10 @@ class LabelSmoothingLoss(nn.Module):
         return loss.mean()
 
 
-# 实现FocalLoss
+'''
+实现FocalLoss
+01.考虑二分类=> 多分类扩展是否逻辑通顺？
+'''
 class FocalLoss(nn.Module):
     r'''
     alpha(1D Tensor, Variable) : the scalar factor for this criterion
@@ -475,12 +519,12 @@ def train():
     config = {
         'use_model': 'nezha',
         'normal_data_cache_path': '',  # 保存训练数据 下次加载更快
-        'data_path': '/home/lawson/program/daguan/risk_data_grand/data/train_2000.txt', # 训练数据
+        'data_path': '/home/lawson/program/daguan/risk_data_grand/data/train.txt', # 训练数据
         'output_path': '/home/lawson/program/daguan/risk_data_grand/model', # fine-tuning后保存模型的路径
-        'model_path': '/home/lawson/program/daguan/pretrain_model/bert-base-fgm/2.4G+4.8M_large_10000_128_40000_checkpoint-50000/', # your pretrain model path => 使用large
+        'model_path': '/home/lawson/program/daguan/pretrain_model/bert-base-fgm/checkpoint-31400-epoch-200', # your pretrain model path
         'shuffle_way': 'block_shuffle',  # block_shuffle 还是 random shuffle
         'use_swa': True, # 目前没有用到？？？
-        'tokenizer_fast': False, 
+        'tokenizer_fast': False,
         'batch_size': 8,
         'num_epochs': 10,
         'max_seq_len': 128,
@@ -497,7 +541,8 @@ def train():
         'seed': 124525601, # 随机种子
         'fold': 5 # k-flod  => 相当于使用0.2 的样本作为dev集
         }
-
+    # 得到pretrain_model_name
+    pretrain_model_name = config["model_path"].split("/")[-1]
     warnings.filterwarnings('ignore')
     localtime_start = time.asctime(time.localtime(time.time()))
     print(">> program start at:{}".format(localtime_start))
@@ -551,8 +596,8 @@ def train():
 
     start = time.time()
     viz = Visdom()
-    win = "train_loss"
-    
+    win_1 = "0.3_train_loss"
+    win_2= "0.3_macro_f1_eval"
     # 添加使用StratifiedKFold 的实现
     # skf = StratifiedKFold(n_splits=config['fold'],shuffle=True,random_state=config['seed'])    
     x = [] 
@@ -592,8 +637,7 @@ def train():
     # start train !!
     for epoch in range(1, config['num_epochs'] + 1):
         model.train()        
-        i = 1
-        
+        i = 1        
         for (src_batch, tgt_batch, seg_batch, mask_batch) \
                 in tqdm(batch_loader(config, src, tgt, seg, mask)):
             src_batch = src_batch.to(config['device'])
@@ -605,10 +649,8 @@ def train():
             output = model(input_ids=src_batch, labels=tgt_batch,
                         token_type_ids=seg_batch, attention_mask=mask_batch)
             loss = output[0]
-
             optimizer.zero_grad()
             loss.backward()
-
             total_loss += loss.item()
             cur_avg_loss += loss.item()
 
@@ -639,7 +681,7 @@ def train():
             # lookahead.step()
             # if epoch > swa_start:
             #     swa_model.update_parameters(model)
-            #     swa_scheduler.step()
+            #     swa_scheduler.step() 
             # else:
             #     scheduler.step()
             scheduler.step()
@@ -652,11 +694,11 @@ def train():
                     (epoch, i + 1, global_steps + 1, cur_avg_loss / config['logging_step'],
                     total_loss / (global_steps + 1),
                     (time.time() - start) / 60.00))
-                viz.line([cur_avg_loss / config['logging_step']],[global_steps],win=win,update='append')
+                viz.line([cur_avg_loss / config['logging_step']],[global_steps],win=win_1,update='append')
                 cur_avg_loss = 0.0
             i +=1 
             global_steps += 1
-                    
+        
         # 开始验证，寻找一个最好的模型        
         avg_loss ,all_label = [],[] # 其实这里precision,recall 是同一个值
         best_f1 = 0 # 保存最好的f1 值
@@ -679,11 +721,17 @@ def train():
             all_label.extend(tgt_batch.tolist())
 
         # 使用 f1_score 函数来计算 macro_f1 值
-        macro_f1 = cal_f1(all_preds, all_label)                
+        macro_f1 = cal_f1(all_preds, all_label)      
+        print(classification_report(all_label,all_preds,
+                                    target_names=label_list
+                                    # target_names=bad_clz
+                                    )
+                                    ) # 打印详细报告
         print("macro_f1 = ",macro_f1)
+        viz.line([macro_f1],[epoch],win=win_2,update='append')
         if macro_f1 > best_f1 :# 如果效果好，则保存模型
-            best_f1 = macro_f1                                    
-            model_save_path = os.path.join(config['output_path'], f'checkpoint-{epoch}')
+            best_f1 = macro_f1
+            model_save_path = os.path.join(config['output_path'], f'{pretrain_model_name}_epoch_{epoch}_{macro_f1}_rate_0.3')
             # if os.path.exists(model_save_path):
             #     os.remove(model_save_path)
             print('model_save_path:', model_save_path)
@@ -692,7 +740,7 @@ def train():
             print('\n>> model saved ... ...')
             model_to_save.save_pretrained(model_save_path)
             conf = json.dumps(config)
-            out_conf_path = os.path.join(config['output_path'], f'checkpoint-{epoch}' +
+            out_conf_path = os.path.join(config['output_path'], f'{pretrain_model_name}_epoch_{epoch}_{macro_f1}_rate_0.3' +
                                         '/train_config.json')
             with open(out_conf_path, 'w', encoding='utf-8') as f:
                 f.write(conf)
@@ -711,7 +759,7 @@ def eval():
     config = {
         'use_model': 'nezha',
         'normal_data_cache_path': '',  # 保存训练数据 下次加载更快
-        'data_path': '/home/lawson/program/daguan/risk_data_grand/data/train.txt', # 训练数据
+        'data_path': '/home/lawson/program/daguan/risk_data_grand/data/train_2000.txt', # 训练数据
         'output_path': '/home/lawson/program/daguan/risk_data_grand/model', # fine-tuning后保存模型的路径
         # 'model_path': '/home/lawson/program/daguan/risk_data_grand/model/best', # your pretrain model path => 使用large
         'model_path': '/home/lawson/program/daguan/risk_data_grand/model/checkpoint-0.692197906755471', 
@@ -781,13 +829,14 @@ def eval():
             output = model(input_ids=src_batch, labels=tgt_batch,
                             token_type_ids=seg_batch, attention_mask=mask_batch)
         loss = output[0]        
-        logits = torch.softmax(output[1], 1)            
+        logits = torch.softmax(output[1], 1)
         preds = torch.argmax(logits,-1)
         all_preds.extend(preds.tolist())    
         all_label.extend(tgt_batch.tolist())
 
     # 使用 f1_score 函数来计算值
-    macro_f1 = cal_f1(all_preds, all_label)                
+    macro_f1 = cal_f1(all_preds, all_label)
+    print(classification_report(all_preds, all_label)) # 打印报告
     print("macro_f1 = ",macro_f1)
     localtime_end = time.asctime(time.localtime(time.time()))
     print("\n>> program end at:{}".format(localtime_end))

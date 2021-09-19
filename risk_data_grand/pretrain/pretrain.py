@@ -163,12 +163,12 @@ def main():
     parser.add_argument("--model_type",default="bert", type=str)
     parser.add_argument("--model_save_path",default="/home/lawson/program/daguan/pretrain_model/bert-base-fgm/final/", type=str)
     parser.add_argument("--data_cache_path,",default='', type=str)
-    parser.add_argument("--seq_length", default=128, type=int)    
+    parser.add_argument("--seq_length", default=50, type=int)    
     config = parser.parse_args()
 
     mlm_probability = 0.15
     num_train_epochs = config.num_epochs
-    seq_length = 128
+    seq_length = 50
     batch_size = config.batch_size
     fgm_epsilon = 1.0
     learning_rate = 2e-5
@@ -186,9 +186,9 @@ def main():
     print(f'use_fgm={use_fgm}')
     
     
-    model_path = "/home/lawson/program/daguan/pretrain_model/bert-base-fgm/2.4G+4.8M_large_10000_128_checkpoint-40000/pytorch_model.bin"
-    config_path = '/home/lawson/program/daguan/pretrain_model/bert-base-fgm/2.4G+4.8M_large_10000_128_checkpoint-40000/config.json'
-    vocab_file = "/home/lawson/program/daguan/pretrain_model/bert-base-fgm/2.4G+4.8M_large_10000_128_checkpoint-40000/vocab.txt"
+    model_path = "/home/lawson/program/daguan/pretrain_model/bert-base-fgm/2.4G+4.8M_large_10000_128_40000_checkpoint-50000/pytorch_model.bin"
+    config_path = '/home/lawson/program/daguan/pretrain_model/bert-base-fgm/2.4G+4.8M_large_10000_128_40000_checkpoint-50000/config.json'
+    vocab_file = "/home/lawson/program/daguan/pretrain_model/bert-base-fgm/2.4G+4.8M_large_10000_128_40000_checkpoint-50000/vocab.txt"
     
     tokenizer = BertTokenizer.from_pretrained(vocab_file)
 
@@ -241,7 +241,7 @@ def main():
         )
 
     # 
-    train_file_path = "/home/lawson/program/daguan/risk_data_grand/data/all.txt"
+    train_file_path = "/home/lawson/program/daguan/risk_data_grand/data/unlabel_title.txt"
     # dataset = Dataset( )
     dataset = LineByLineTextDataset(tokenizer=tokenizer,
                                     train_file_path=train_file_path,                                        
