@@ -1,9 +1,10 @@
+import math
 import random 
 import pandas as pd
 '''
 Author: LawsonAbs
 Date: 2021-09-04 22:07:40
-LastEditTime: 2021-09-17 09:35:03
+LastEditTime: 2021-09-19 10:15:47
 FilePath: /daguan/risk_data_grand/utils/tools.py
 '''
 import os
@@ -16,6 +17,18 @@ label2id = {'5-24': 0, '6-34': 1, '1-1': 2, '6-8': 3, '10-26': 4, '2-3': 5, '5-2
               '1-10': 23, '6-19': 24, '3-5': 25, '2-2': 26, '4-7': 27, '2-17': 28, '5-12': 29, '6-32': 30, '6-31': 31, '2-25': 32, '2-11': 33, '2-14': 34}
 
 id2label = {0: '5-24', 1: '6-34', 2: '1-1', 3: '6-8', 4: '10-26', 5: '2-3', 6: '5-22', 7: '6-28', 8: '8-18', 9: '1-4', 10: '2-6', 11: '6-21', 12: '7-16', 13: '6-29', 14: '6-20', 15: '6-15', 16: '6-13', 17: '9-23', 18: '5-35', 19: '2-33', 20: '5-30', 21: '1-9', 22: '8-27', 23: '1-10', 24: '6-19', 25: '3-5', 26: '2-2', 27: '4-7', 28: '2-17', 29: '5-12', 30: '6-32', 31: '6-31', 32: '2-25', 33: '2-11', 34: '2-14'}
+
+
+bad_clz = ['6-20','5-24','1-1','6-8','5-22','6-13',
+            '1-9','6-31','2-11','2-14','6-19','6-28','4-7',  # 13
+
+        # less sample                 
+            '3-5','8-27','7-16','8-18','9-23','10-26','2-17' # 7
+            ]
+
+bad_clz2id={'6-20': 0, '5-24': 1, '1-1': 2, '6-8': 3, '5-22': 4, '6-13': 5, '1-9': 6, '6-31': 7, '2-11': 8, '2-14': 9, '6-19': 10, '6-28': 11, '4-7': 12, '3-5': 13, '8-27': 14, '7-16': 15, '8-18': 16, '9-23': 17, '10-26': 18, '2-17': 19}
+
+bad_id2clz = {0: '6-20', 1: '5-24', 2: '1-1', 3: '6-8', 4: '5-22', 5: '6-13', 6: '1-9', 7: '6-31', 8: '2-11', 9: '2-14', 10: '6-19', 11: '6-28', 12: '4-7', 13: '3-5', 14: '8-27', 15: '7-16', 16: '8-18', 17: '9-23', 18: '10-26', 19: '2-17'}
 
 
 def test():
@@ -157,22 +170,69 @@ def ensemble(data_path):
 
 
 # 数据增强方法，用于将小样本的数据扩增
+# 将扩增后的数据达到200条
 def data_augment():
-    pass
+    less_clz = ['5-24','8-27','6-20','7-16','8-18','9-23','10-26','3-5']
+    train_data_path = "/home/lawson/program/daguan/risk_data_grand/data/train.txt"
+    train_augment_path = "/home/lawson/program/daguan/risk_data_grand/data/train_augment.txt"
+    raw_data = []
+    all_data = [] # 保存数据扩增后的内容
+    with open(train_data_path,'r') as f:
+        for line in f:
+            line = line.strip("\n").split("\t")
+            cont = line[1] +"\t"+ line[2] + "\n"
+            raw_data.append(cont)
+        
+    for clz in less_clz: # 扩增当前这类的数据
+        gene_data = [] # 生成的数据
+        clz_data = [] # 记录当前clz 的data
+        for line in raw_data:
+            temp = line.strip("\n").split("\t")
+            label = temp[1]
+            content = temp[0] # 该行文本
+            if id2label[int(label)]==clz: # 说明是需要扩增的类别，那么就作为种子数据
+                clz_data.append(content) # 放入文本
+                temp = content.split("，")
+                temp = [_.strip() for _ in temp]
+                # 随机shuffle 然后拼接得到一句话
+                if len(temp) >= 2:
+                    cnt = math.factorial(len(temp))
+                    cnt = min(10,cnt)
+                    while(cnt):
+                        random.shuffle(temp)
+                        content = "，".join(temp)
+                        cnt-=1
+                        content = content + "\t"+label+"\n"
+                        gene_data.append(content) # 生成的数据
+                elif len(temp) == 2:            
+                    content = temp[0]+"，"+temp[1]+"\t"+label+"\n"
+                    gene_data.append(content) # 生成的数据
+        print(len(gene_data))
+        gene_data = gene_data[0: 200]
+        all_data.extend(gene_data)
+    
+    all_data.extend(raw_data)
+    random.shuffle(all_data)
+    with open(train_augment_path,'w') as f:
+        idx = 0
+        for line in all_data:
+            f.write(str(idx)+"\t"+line)
+            idx+=1
+
 
 # 从train.txt中按照类别随机选择数据，使得数据集在类别中达到分布均衡
 # # 除了少数标签的类别外，按照0.3 的比率取值
 def select_data(data_path,rate):
-    less_clz_ = ['8-27','6-20','7-16','8-18','9-23','10-26','3-5','5-24'] # 少数目的类别
-    less_clz_id = ['22','14','12','8','17','4','25','0']
-    select_cont = [] # 被选中的内容    
+    less_clz_ = ['5-24','8-27','6-20','7-16','8-18','9-23','10-26','3-5'] # 少数目的类别
+    less_clz_id = ['0','22','14','12','8','17','4','25']
+    select_cont = [] # 被选中的内容
     clz_data = {} # 每个类对应的数据
 
     with open(data_path, 'r') as f:
         for row in f:
             temp = row.strip("\n").split("\t")            
             label = temp[2]
-            if label in less_clz_id: # 找出少样本的数据，直接放入到                                    
+            if label in less_clz_id: # 找出少样本的数据，直接放入
                 select_cont.append(row) # 读入数据
             else:
                 if label not in clz_data.keys():
@@ -180,7 +240,7 @@ def select_data(data_path,rate):
                 else:
                     clz_data[label].append(row) # 读入数据
     
-    random.seed(10) # 设置种子，保持随机一致性
+    # random.seed(10) # 设置种子，保持随机一致性  => 这里的一致性没有什么用吧
     for item in clz_data.items():
         label,cont = item # 得到label, cont
         # 使用label 和 cont
@@ -196,55 +256,119 @@ def select_data(data_path,rate):
         for row in select_cont:
             f.write(row)
 
+# 从train.txt中取出某些类别的数据，这么做是因为想在差的类别上再做分类
+def select_bad_sample(data_path):
+    bad_sample = [] # 
+    with open(data_path, 'r') as f:
+        for row in f:
+            temp = row.strip("\n").split("\t")
+            label = id2label[int(temp[2])] 
+            # print(row)
+            if label in bad_clz: 
+                bad_sample.append(temp[0]+"\t"+temp[1]+"\t"+str(bad_clz2id[label])+'\n') # 读入数据        
+
+    random.shuffle(bad_sample)    
+    with open(f'/home/lawson/program/daguan/risk_data_grand/data/bad_sample.txt','w') as f:
+        for row in bad_sample:
+            f.write(row)
+
+
 
 # 合并submission，将submission_balance.txt 和 submission_ensemble.txt 合并成一个文件。合并原则是：如果 submission_balance.txt 中预测的样本是少样本，则采取该类别，否则使用submission_ensemble.txt 中的内容
-def combine_submission(path_balance,path_ensemble):
-    less_clz = ['8-27','6-20','7-16','8-18','9-23','10-26','3-5','5-24'] # 少数目的类别
-    ensemble = {}
-    balance = {}
+def combine_submission(best_path,path_balance):
+    less_clz = ['8-27','6-20','7-16','8-18','9-23','10-26','3-5','5-24'] # 少数目的类别    
+    ensemble = {}    
+    with open(best_path,'r' ) as f:
+        f.readline()
+        for line in f:
+            iid,label = line.strip("\n").split(",")
+            ensemble[iid] = label
 
     with open(path_balance,'r' ) as f:
         f.readline()
         for line in f:
             iid,label = line.strip("\n").split(",")
-            balance[iid] = label
-            
-    with open(path_ensemble,'r' ) as f:
+            if label in less_clz: # 选择相信这个文件
+                ensemble[iid] = label
+                
+        
+    iid = list(ensemble.keys())
+    labels = list(ensemble.values())
+    temp = pd.DataFrame({'id':iid,
+                            'label':labels})
+    submit_path = "/home/lawson/program/daguan/submission_best_combine.csv"
+    temp.to_csv(submit_path,index=False)
+        
+
+# 将预测坏的结果剔除掉，使用专用模型来解决这个问题
+# two-step 来做这件事
+def combine_bad_sample(submission_bset,submission_bad):
+    best = {}
+    with open(submission_bset,'r' ) as f:
         f.readline()
         for line in f:
             iid,label = line.strip("\n").split(",")
-            ensemble[iid] = label
+            best[iid] = label
+
+    # 将坏的预测结果替换掉
+    with open(submission_bad,'r' ) as f:
+        f.readline()
+        for line in f:
+            iid,label = line.strip("\n").split(",")
+            best[iid] = label
     
-    # 遍历其中的内容，合并两个结果
-    res = {}
-    difference = 0
-    for i1,i2 in zip(ensemble.items(),balance.items()):
-        iid1,label1 = i1
-        iid2,label2 = i2
-        if label1 != label2:
-            difference +=1
-        if label2 in less_clz: # 如果是少样本，则相信balance模型
-            res[iid1] = label2
-        else:
-            res[iid1] = label1 # 如果是正常情况，则相信
-    print(f"difference = {difference}")
-    iid = list(res.keys())
-    labels = list(res.values())
+    iid = list(best.keys())
+    labels = list(best.values())
 
     temp = pd.DataFrame({'id':iid,
                             'label':labels})
-    submit_path = "/home/lawson/program/daguan/submission_combine.csv"
+    submit_path = "/home/lawson/program/daguan/submission_two_step.csv"
     temp.to_csv(submit_path,index=False)
-        
+
+
+# 找出test中的剩余行数
+def get_remain_line_in_test(test_path,submission_path):
+    test = []
+    with open(test_path, 'r') as f:
+        for line in f:
+            test.append(line)
+    
+    remain_test = '/home/lawson/program/daguan/risk_data_grand/data/reamin_test.txt'
+    remain_iid = []
+    with open(submission_path, 'r') as f:
+        f.readline()
+        for line in f:
+            iid,label =line.strip("\n").split(',') #分割
+            iid = int(iid)
+            if label in bad_clz: # 如果预测结果在 bad_label 中
+                remain_iid.append(iid)
+    
+    with open(remain_test,'w') as f:
+        for i in remain_iid:
+            line = test[i]
+            f.write(line)
+
+
+
+
+def post_process():
+    pass
 
 
 if __name__ == '__main__':
     # get_vocab_map("")
     # ensemble("/home/lawson/program/daguan/res")
     train_data_path = '/home/lawson/program/daguan/risk_data_grand/data/train.txt'
-    ensemble_path = "/home/lawson/program/daguan/submission_ensemble.csv"
-    less_clz_path = "/home/lawson/program/daguan/submission_balance_rate_0.5.csv"
-    # select_data(train_data_path,rate=0)
-    # combine_submission(less_clz_path,ensemble_path)
+    test_data_path = '/home/lawson/program/daguan/risk_data_grand/data/test.txt'
+    ensemble_path = "/home/lawson/program/daguan/submission_two_step.csv"
+    less_clz_path = "/home/lawson/program/daguan/submission_combine_0.5958.csv"
+    select_data(train_data_path,rate=0.3)
+    # combine_submission(ensemble_path, less_clz_path )
     data_path = '/home/lawson/program/daguan/risk_data_grand/data'
-    get_files_in_class(data_path)
+    # get_files_in_class(data_path)
+    # select_bad_sample(train_data_path)
+    # get_remain_line_in_test(test_path=test_data_path,submission_path= "/home/lawson/program/daguan/submission_ck_10_ls_0.01_50000_0.59265.csv")
+    submission_best_path = "/home/lawson/program/daguan/submission_ck_10_ls_0.01_50000_0.59265.csv"
+    submission_bad_path = "/home/lawson/program/daguan/submission_bad_sample_1.csv"
+    # combine_bad_sample(submission_best_path, submission_bad_path)
+    # data_augment()
