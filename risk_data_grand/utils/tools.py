@@ -1,10 +1,11 @@
+from collections import Counter
 import math
 import random 
 import pandas as pd
 '''
 Author: LawsonAbs
 Date: 2021-09-04 22:07:40
-LastEditTime: 2021-09-19 10:15:47
+LastEditTime: 2021-09-21 20:57:00
 FilePath: /daguan/risk_data_grand/utils/tools.py
 '''
 import os
@@ -133,7 +134,7 @@ def read_test_data(data_path):
     return all_cont
 
 # 将指定文件下的 submission 任务ensemble
-def ensemble(data_path):
+def ensemble(data_path):    
     # 6004 * 35 的二维矩阵
     matrix = [[0 for j in range(35)] for i in range(6004)]
     files = os.listdir(data_path) # 找出当前这个文件夹下的所有文件
@@ -142,9 +143,13 @@ def ensemble(data_path):
         return 
     for file in files:
         cur_file_path = os.path.join(data_path,file)
-        cnt = 1
-        if cur_file_path == "/home/lawson/program/daguan/res/submission_best_0.589.csv" or cur_file_path == "/home/lawson/program/daguan/res/submission_0905_0.583.csv":
-            cnt = 1.2
+        if os.path.isdir(cur_file_path):
+            continue
+        cnt = 1 # 设置权重
+        if cur_file_path == "/home/lawson/program/daguan/res/submission_ck_10_ls_0.01_50000_0.59265.csv" :
+            cnt = 1.3
+        elif cur_file_path == "/home/lawson/program/daguan/res/submission_0.589.csv":
+            cnt = 1.2 
         with open(cur_file_path,'r') as f:
             f.readline()
             for line in f:
@@ -162,10 +167,11 @@ def ensemble(data_path):
         idx = cur_row.index(max(cur_row)) # 找到最大值的下标
         res_id.append(i)
         res_label.append(id2label[idx])
-
+    for _ in matrix:
+        print(_)
     res = pd.DataFrame({'id':res_id,
                             'label':res_label})
-    submit_path = f"{data_path}/submission_ensemble.csv"
+    submit_path = f"{data_path}/submission_less_ensemble_2.csv" # 合并少数样本的类
     res.to_csv(submit_path,index=False)
 
 
@@ -221,7 +227,7 @@ def data_augment():
 
 
 # 从train.txt中按照类别随机选择数据，使得数据集在类别中达到分布均衡
-# # 除了少数标签的类别外，按照0.3 的比率取值
+# # 除了少数标签的类别外，按照rate 的比率取值
 def select_data(data_path,rate):
     less_clz_ = ['5-24','8-27','6-20','7-16','8-18','9-23','10-26','3-5'] # 少数目的类别
     less_clz_id = ['0','22','14','12','8','17','4','25']
@@ -233,7 +239,9 @@ def select_data(data_path,rate):
             temp = row.strip("\n").split("\t")            
             label = temp[2]
             if label in less_clz_id: # 找出少样本的数据，直接放入
-                select_cont.append(row) # 读入数据
+                for i in range(10): 
+                    select_cont.append(row) # 读入数据
+                
             else:
                 if label not in clz_data.keys():
                     clz_data[label] = []
@@ -252,7 +260,7 @@ def select_data(data_path,rate):
     random.shuffle(select_cont) # shuffle一下
     rate = str(rate) 
     # 得到一个均衡的样本集合，并写入文件
-    with open(f'/home/lawson/program/daguan/risk_data_grand/data/train_balance_{rate}.txt','w') as f:
+    with open(f'/home/lawson/program/daguan/risk_data_grand/data/train_balance_{rate}_repeat.txt','w') as f:
         for row in select_cont:
             f.write(row)
 
@@ -276,7 +284,7 @@ def select_bad_sample(data_path):
 
 # 合并submission，将submission_balance.txt 和 submission_ensemble.txt 合并成一个文件。合并原则是：如果 submission_balance.txt 中预测的样本是少样本，则采取该类别，否则使用submission_ensemble.txt 中的内容
 def combine_submission(best_path,path_balance):
-    less_clz = ['8-27','6-20','7-16','8-18','9-23','10-26','3-5','5-24'] # 少数目的类别    
+    less_clz = ['3-5','8-27','6-20','7-16','8-18','9-23','10-26','5-24'] # 少数目的类别    
     ensemble = {}    
     with open(best_path,'r' ) as f:
         f.readline()
@@ -288,7 +296,7 @@ def combine_submission(best_path,path_balance):
         f.readline()
         for line in f:
             iid,label = line.strip("\n").split(",")
-            if label in less_clz: # 选择相信这个文件
+            if label in less_clz: 
                 ensemble[iid] = label
                 
         
@@ -351,19 +359,42 @@ def get_remain_line_in_test(test_path,submission_path):
 
 
 
+'''
+针对样本不均衡的类别后处理该怎么写？
+01.找出关键字，关键词。如果出现在train中的比例有，且同样出现在test中，那么就使用该关键字作为判别方法
+例如我们找出某一类别的关键字，然后判断其出现在train中的比例。找出该类别下的共性关键字，然后来判断。
+'''
 def post_process():
     pass
 
 
+def show_res(submission_path):
+    label_cnt = {} # label => cnt
+    all_label = []
+    with open(submission_path,'r') as f:
+        f.readline()
+        for line in f:
+            iid,label = line.strip().split(",")
+            # print(label)
+            all_label.append(label)
+    label_cnt = Counter(all_label)
+    a = sorted(label_cnt.items(),key=lambda x:x[1],reverse=True) 
+    for item in a:
+        print(item)
+        # print(label_cnt)
+
+
 if __name__ == '__main__':
+    submission_path = "/home/lawson/program/daguan/res/submission_60000_10.csv"
+    # show_res(submission_path)
     # get_vocab_map("")
-    # ensemble("/home/lawson/program/daguan/res")
+    # ensemble("/home/lawson/program/daguan/less")
     train_data_path = '/home/lawson/program/daguan/risk_data_grand/data/train.txt'
     test_data_path = '/home/lawson/program/daguan/risk_data_grand/data/test.txt'
-    ensemble_path = "/home/lawson/program/daguan/submission_two_step.csv"
-    less_clz_path = "/home/lawson/program/daguan/submission_combine_0.5958.csv"
-    select_data(train_data_path,rate=0.3)
-    # combine_submission(ensemble_path, less_clz_path )
+    ensemble_path = "/home/lawson/program/daguan/res/submission_ensemble_final.csv"
+    less_clz_path = "/home/lawson/program/daguan/less/submission_less_ensemble.csv"
+    # select_data(train_data_path,rate=0.36)
+    combine_submission(ensemble_path, less_clz_path )
     data_path = '/home/lawson/program/daguan/risk_data_grand/data'
     # get_files_in_class(data_path)
     # select_bad_sample(train_data_path)

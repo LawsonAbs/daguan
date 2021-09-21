@@ -194,8 +194,8 @@ def main():
         'model_type': 'bert-base-fgm', # 加载模型文件夹                
         # 'vocab_path': '/home/lawson/program/daguan/risk_data_grand/model/best/vocab.txt',
         'test_path': '/home/lawson/program/daguan/risk_data_grand/data/test.txt', # 测试数据
-        'load_model_path': '/home/lawson/program/daguan/risk_data_grand/model/checkpoint-31400-epoch-200_epoch_10_0.5437', # 加载训练后的模型
-        'submit_path': 'submission_ngram_10.csv', # 提交结果的文件名
+        'load_model_path': '/home/lawson/program/daguan/risk_data_grand/model/2.4G+4.8M_large_10000_128_40000_checkpoint-50000_epoch_10_repeat_0.34', # 加载训练后的模型
+        'submit_path': 'submission_epoch_10_repeat_0.34.csv', # 提交结果的文件名
         'batch_size': 8,
         'max_seq_len': 128, 
         'device': 'cuda',
