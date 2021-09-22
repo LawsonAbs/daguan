@@ -1,7 +1,7 @@
 <!--
  * @Author: LawsonAbs
  * @Date: 2021-09-04 22:07:40
- * @LastEditTime: 2021-09-22 15:31:39
+ * @LastEditTime: 2021-09-22 21:50:07
  * @FilePath: /daguan/README.md
 -->
 # 1. 算法思想
@@ -16,6 +16,7 @@
 针对文本长度，主要分析 `train.txt+test.txt` (+表示拼接两个文本)； `datagrand_2021_unlabeled_data` （下称无标签数据）中 `title` 字段数据长度，二者长度分布如下：
 ![title_analysis](train+test.png)
 ![title_analysis](title.png)
+
 可以很明显看到，二者在文本长度这一特征上有明显的不同，所以让我们选择以无标签数据简单预训练，以 `train.txt + test.txt` 为主要预训练。
 
 ## 2.3 模型分析
