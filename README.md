@@ -1,7 +1,7 @@
 <!--
  * @Author: LawsonAbs
  * @Date: 2021-09-04 22:07:40
- * @LastEditTime: 2021-09-21 21:29:42
+ * @LastEditTime: 2021-09-22 11:03:59
  * @FilePath: /daguan/README.md
 -->
 # 方法
@@ -14,10 +14,13 @@
 # 预训练
 
 数据集：train.txt + test.txt 
+
 python risk_data_grand/pretrain/pretrain.py
 
 # fine-tuning(训练模型)
+
 python risk_data_grand/train.py 
 
 # predict
+
 python run_predictor_local.py
