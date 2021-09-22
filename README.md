@@ -15,12 +15,18 @@
 
 数据集：train.txt + test.txt 
 
+```sh
 python risk_data_grand/pretrain/pretrain.py
+```
 
 # fine-tuning(训练模型)
 
+```sh
 python risk_data_grand/train.py 
+```
 
 # predict
 
+```sh
 python run_predictor_local.py
+```
