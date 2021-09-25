@@ -1,9 +1,23 @@
 <!--
  * @Author: LawsonAbs
  * @Date: 2021-09-04 22:07:40
- * @LastEditTime: 2021-09-24 19:32:05
- * @FilePath: /daguan_gitee/README.md
+ * @LastEditTime: 2021-09-25 08:08:26
+ * @FilePath: /data/README.md
 -->
+# 0. 环境要求
+执行本代码的环境要求如下：
+- 安装包版本
+torch                              1.8.1
+tqdm                               4.61.0
+transformers                       4.7.0
+visdom                             0.1.8.9
+
+- 显卡
+GeForce RTX 2080Ti * 2
+
+使用如上配置，可在机器上顺利执行。
+
+
 # 1. 算法思想
 针对本赛题，LModel队伍将其视作一种**分类任务**，采取的方法是：使用基于**预训练+微调** 的方法来解决本任务。
 

@@ -215,8 +215,7 @@ def main():
     if config.model_type == 'bert':
         model_config = BertConfig.from_pretrained(config_path)
         # 下面这种方式就是随机初始化的
-        # model = BertForMaskedLM(config=model_config)
-        # model = BertForMaskedLM.from_pretrained("/home/lawson/program/daguan/pretrain_model//final")
+        # model = BertForMaskedLM(config=model_config)        
         model = BertForMaskedLM.from_pretrained(pretrained_model_name_or_path=model_path,
                                                  config=model_config)
 

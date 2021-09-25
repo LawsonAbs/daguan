@@ -5,8 +5,8 @@ import pandas as pd
 '''
 Author: LawsonAbs
 Date: 2021-09-04 22:07:40
-LastEditTime: 2021-09-23 13:51:06
-FilePath: /daguan_gitee/code/tools.py
+LastEditTime: 2021-09-25 08:02:16
+FilePath: /data/code/tools.py
 '''
 import os
 from queue import Queue
@@ -20,45 +20,7 @@ label2id = {'5-24': 0, '6-34': 1, '1-1': 2, '6-8': 3, '10-26': 4, '2-3': 5, '5-2
 id2label = {0: '5-24', 1: '6-34', 2: '1-1', 3: '6-8', 4: '10-26', 5: '2-3', 6: '5-22', 7: '6-28', 8: '8-18', 9: '1-4', 10: '2-6', 11: '6-21', 12: '7-16', 13: '6-29', 14: '6-20', 15: '6-15', 16: '6-13', 17: '9-23', 18: '5-35', 19: '2-33', 20: '5-30', 21: '1-9', 22: '8-27', 23: '1-10', 24: '6-19', 25: '3-5', 26: '2-2', 27: '4-7', 28: '2-17', 29: '5-12', 30: '6-32', 31: '6-31', 32: '2-25', 33: '2-11', 34: '2-14'}
 
 
-def test():
-    import pandas as pd
-    pd.set_option('display.max_columns', None)
-    #显示所有行
-    pd.set_option('display.max_rows', None)
-    pd.set_option('max_colwidth',1000)
 
-    path = "/home/lawson/program/daguan/code/data/train.csv"
-    f = pd.read_csv(path,sep=',') 
-    # print(f.head)
-
-    labels = f['label']
-    text = f['text']
-    # print(text)
-
-    cnt = 0
-    for text, label in zip(f['text'], labels):
-        if cnt < 10:
-            print(f"text={text},label = {label}")
-            cnt+=1
-        else:
-            break
-
-
-
-def get_vocab_map(vocab_path):
-    vocab_path = "/home/lawson/program/daguan/vocab.txt"
-    vocab_id = {}
-    index = 0
-    # 写一个获取vocab映射的
-    with open(vocab_path, 'r', encoding='utf-8') as f1:
-        for line in f1:            
-            line = line.strip("\n")
-            vocab_id[line] = index
-            index += 1
-    
-    for item in vocab_id.items():
-        key ,value = item
-        print(key,value)
 
 
 # 读取所有训练数据，并返回其内容和标签
@@ -134,9 +96,9 @@ def ensemble(data_path,less):
         if os.path.isdir(cur_file_path):
             continue
         cnt = 1 # 设置权重
-        if cur_file_path == "/home/lawson/program/daguan/prediction_result/submission_ck_10_ls_0.01_50000_0.59265.csv" :
+        if cur_file_path == "../prediction_result/normal/submission_0.59265.csv" :
             cnt = 1.3
-        elif cur_file_path == "/home/lawson/program/daguan/prediction_result/submission_0.589.csv":
+        elif cur_file_path == "../prediction_result/normal/submission_0.589.csv" :
             cnt = 1.2 
         with open(cur_file_path,'r') as f:
             f.readline()
@@ -191,7 +153,7 @@ def combine_submission(best_path,balance_path):
     labels = list(ensemble.values())
     temp = pd.DataFrame({'id':iid,
                             'label':labels})
-    submit_path = "/home/lawson/program/daguan/submission_best_combine.csv"
+    submit_path = "../prediction_result/result.txt"
     temp.to_csv(submit_path,index=False)
     
 

@@ -439,9 +439,9 @@ def train():
     config = {
         'use_model': 'nezha',
         'normal_data_cache_path': '',  # 保存训练数据 下次加载更快
-        'data_path': '/home/lawson/program/daguan/code/data/train_balance_0.36_repeat.txt', # 训练数据
-        'output_path': '/home/lawson/program/daguan/code/model', # fine-tuning后保存模型的路径
-        'model_path': '/home/lawson/program/daguan/pretrain_model/2.4G+4.8M_large_10000_128_40000_checkpoint-50000', # your pretrain model path
+        'data_path': '../user_data/train_balance_0.36_repeat.txt', # 训练数据
+        'output_path': '../user_data/fine_tune_model/model', # fine-tuning后保存模型的路径
+        'model_path': '../pretrain_model/2.4G+4.8M_large_10000_128_40000_checkpoint-50000', # your pretrain model path
         'shuffle_way': 'block_shuffle',  # block_shuffle 还是 random shuffle
         'use_swa': True, # 目前没有用到？？？
         'tokenizer_fast': False,

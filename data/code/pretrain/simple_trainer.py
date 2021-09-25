@@ -14,7 +14,7 @@ import os
 import re
 import shutil
 import sys
-sys.path.append('/home/lawson/program/daguan/code/pretrain')
+sys.path.append('../pretrain')
 import time
 import warnings
 from logging import StreamHandler
