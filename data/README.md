@@ -1,7 +1,7 @@
 <!--
  * @Author: LawsonAbs
  * @Date: 2021-09-04 22:07:40
- * @LastEditTime: 2021-09-25 08:08:26
+ * @LastEditTime: 2021-09-25 10:21:29
  * @FilePath: /data/README.md
 -->
 # 0. 环境要求
@@ -11,11 +11,10 @@ torch                              1.8.1
 tqdm                               4.61.0
 transformers                       4.7.0
 visdom                             0.1.8.9
-
+python                             3.8.3
 - 显卡
 GeForce RTX 2080Ti * 2
-
-使用如上配置，可在机器上顺利执行。
+对应Nvidia驱动 Driver Version: 455.45.01，CUDA Version: 11.1 。使用如上配置，应可在机器上顺利执行。
 
 
 # 1. 算法思想
@@ -37,7 +36,7 @@ GeForce RTX 2080Ti * 2
 处理分类任务的方法有很多，机器学习方法有：KNN算法；朴素贝叶斯；SVM等等。深度学习方法有：使用预训练模型+softmax分类。考虑到深度学习在分类问题上的优越表现，我们选择使用深度学习方法作为本问题的解决方案。在深度学习中我们使用的是 `chinese-roberta-wwm-ext-large` 。
 
 ## 2.4 模型融合
-考虑到单模型在一个问题上可能存在短板，我们选择使用四个比较健壮的模型来融合得到最后的结果，即submission_ensemble.csv；同时考虑到小类别数据在上述四个模型上的效果不佳，我们采取重采样+数据增强的方法针对少数类别的样本进行一个单独的训练，将得到的模型进行一个融合，得到融合结果submission_less_ensemble.csv。在小类别数据上，使用submission_less_ensembel.csv覆盖上述文件 submission_ensemble.csv 得到最后的提交文件 submission_best_combine.csv。
+考虑到单模型在一个问题上可能存在短板，我们选择使用四个比较健壮的模型来融合得到最后的结果，即submission_ensemble.csv；同时考虑到小类别数据在上述四个模型上的效果不佳，我们采取重采样+数据增强的方法针对少数类别的样本进行一个单独的训练，将得到的模型进行一个融合，得到融合结果submission_less_ensemble.csv。在小样本数据（基于对train.txt数据的分析，将标签为 '3-5','8-27','6-20','7-16','8-18','9-23','10-26','5-24' 视作少样本的类别 ，后文的小样本统指此类数据）上，使用submission_less_ensembel.csv覆盖上述文件 submission_ensemble.csv 得到最后的提交文件 submission_best_combine.csv。
 
 
 # 3. 详细实现
@@ -63,7 +62,9 @@ GeForce RTX 2080Ti * 2
 	    |-- 参赛者模型文件
 	    |-- 其他文件等
     |-- prediction_result
-	    |-- result.csv
+        |--less  (对少数样本的预测结果)
+        |--normal(对所有样本的预测结果)
+	    |-- result.csv （最后的提交结果）
     |-- code
 	    |-- 这里是docker执行时需要的代码
     |-- raw_data
@@ -78,3 +79,16 @@ GeForce RTX 2080Ti * 2
 - 同时，本团队只做了一个token的mask，其实还可以做ngram 的mask操作，但同样由于比赛时间过于紧张，此部分实验也未能如期进行。有关ngram mask 在预训练方面的操作可以参考百度团队工作 ERNIE-Gram [https://aclanthology.org/2021.naacl-main.136/]，其对模型效果会有进一步的提升。
 
 - 本团队使用了两个预训练词表，分别是user_data/data下的vocab_1.txt 和 vocab_2.txt，设计这两个词表的出发点分别在于：考虑词频（我们保留出现次数大于5的词）和与bert原生词表（靠近2.1w）保持一致。但是限于时间，我们尚未对词表大小最优设置进行判断，所以可能存在一种最优但我们尚未发现的词表设置。
+
+
+## 5.2 文件命名说明
+这里对文件命名进行一个解释说明。
+
+
+## 5.3 ！！重要说明！！
+由于团队疏忽，未能保存所有模型，导致部分数据无法重现，其包括如下文件：
+- submission_0905_0.583.csv ： 一个较好的提交结果，于2021/09/05 23:40 提交A榜的成绩
+- submission_balance_10_num_30.csv ：用于解决小样本问题。对于每个类别的数据只随机抽取30个样本，训练 10 epoch，得到的结果。
+- submission_balance_10_num_60.csv ：用于解决小样本问题。对于每个类别的数据值随机抽取60个样本，训练 10 epoch，得到的结果。
+
+如果需要完全复现团队B榜提交结果，还请将文件 data/code/submission_0905_0.583.csv 移动到 data/prediction_result/normal 下，将 data/code/submission_balance_10_num_30.csv 和 data/code/submission_balance_10_num_60.csv 移动到 prediction_result/less 下。这样可保证**完全复现**提交结果。 若不移动文件，可以完全使用团队训练得到的模型来生成文件，但不一定保证能够完全复现。

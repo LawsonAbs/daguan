@@ -5,7 +5,7 @@ import pandas as pd
 '''
 Author: LawsonAbs
 Date: 2021-09-04 22:07:40
-LastEditTime: 2021-09-25 08:02:16
+LastEditTime: 2021-09-25 09:47:16
 FilePath: /data/code/tools.py
 '''
 import os
@@ -96,9 +96,9 @@ def ensemble(data_path,less):
         if os.path.isdir(cur_file_path):
             continue
         cnt = 1 # 设置权重
-        if cur_file_path == "../prediction_result/normal/submission_0.59265.csv" :
+        if cur_file_path == "../prediction_result/normal/A_epoch_10_0.592.csv" :
             cnt = 1.3
-        elif cur_file_path == "../prediction_result/normal/submission_0.589.csv" :
+        elif cur_file_path == "../prediction_result/normal/C_epoch_10_0.589.csv" :
             cnt = 1.2 
         with open(cur_file_path,'r') as f:
             f.readline()
@@ -117,8 +117,8 @@ def ensemble(data_path,less):
         idx = cur_row.index(max(cur_row)) # 找到最大值的下标
         res_id.append(i)
         res_label.append(id2label[idx])
-    for _ in matrix:
-        print(_)
+    # for _ in matrix:
+    #     print(_)
     res = pd.DataFrame({'id':res_id,
                             'label':res_label})
     
@@ -157,29 +157,14 @@ def combine_submission(best_path,balance_path):
     temp.to_csv(submit_path,index=False)
     
 
-def show_res(submission_path):
-    label_cnt = {} # label => cnt
-    all_label = []
-    with open(submission_path,'r') as f:
-        f.readline()
-        for line in f:
-            iid,label = line.strip().split(",")
-            # print(label)
-            all_label.append(label)
-    label_cnt = Counter(all_label)
-    a = sorted(label_cnt.items(),key=lambda x:x[1],reverse=True) 
-    for item in a:
-        print(item)
-        # print(label_cnt)
-
 
 if __name__ == '__main__':
     
     # show_res(submission_path)
     # get_vocab_map("")
-    ensemble("../prediction_results/less")
-    ensemble("../prediction_results/normal")
+    ensemble("../prediction_result/less",less=True)
+    ensemble("../prediction_result/normal",less=False)
     
-    ensemble_normal_path = "../prediction_results/normal/submssion_normal_ensemble.csv"
-    ensemble_less_path = "../prediction_results/less/submission_less_ensemble.csv"
+    ensemble_normal_path = "../prediction_result/normal/submission_normal_ensemble.csv"
+    ensemble_less_path = "../prediction_result/less/submission_less_ensemble.csv"
     combine_submission(ensemble_normal_path, ensemble_less_path)
