@@ -24,10 +24,10 @@ parser.add_argument('--sum', dest='accumulate', action='store_const',
                     const=sum, default=max,
                     help='sum the integers (default: find the max)')
 parser.add_argument('--model_type',default="")
-parser.add_argument('--test_path',default="../raw_data/test.txt") # 测试数据
+parser.add_argument('--test_path',default="../user_data/data/test.txt") # 测试数据
 parser.add_argument('--load_model_path',default='~',
                     type=str) # 加载模型
-parser.add_argument('--submit_path',default="../prediction_result/")
+parser.add_argument('--submit_path',default="../prediction_result/") # 存放结果的根目录
 parser.add_argument('--batch_size',default=8,type=int)
 parser.add_argument('--max_seq_len',default=128,type=int)
 parser.add_argument('--device',default="cuda",type=str)
