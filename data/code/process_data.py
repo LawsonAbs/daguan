@@ -310,7 +310,7 @@ def select_data_rate(data_path,rate):
 
     random.shuffle(select_cont) # shuffle一下
     rate = str(rate) 
-    out_path = f'/home/lawson/program/daguan/risk_data_grand/data/train_balance_{num}_repeat.txt'
+    out_path = f'../user_data/data/train_balance_{rate}_repeat.txt'
     # 得到一个均衡的样本集合，并写入文件
     with open(out_path,'w') as f:
         for row in select_cont:
@@ -322,7 +322,7 @@ def select_data_rate(data_path,rate):
 def select_data_num(data_path,num):    
     select_cont = [] # 被选中的内容
     clz_data = {} # 每个类对应的数据
-    out_path = f'/home/lawson/program/daguan/risk_data_grand/data/train_balance_{num}.txt'
+    out_path = f'../user_data/data/train_balance_{num}.txt'
     with open(data_path, 'r') as f:
         for row in f:
             temp = row.strip("\n").split("\t")            
