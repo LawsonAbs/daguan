@@ -1,7 +1,7 @@
 <!--
  * @Author: LawsonAbs
  * @Date: 2021-09-25 18:37:31
- * @LastEditTime: 2021-09-25 18:58:57
+ * @LastEditTime: 2021-09-26 15:20:06
  * @FilePath: /daguan_gitee/image/README.md
 -->
 # 0. 环境配置
@@ -11,7 +11,8 @@
 
 因为百度网盘限制，无法一次性上传超过4G大小的文件，所以使用linux中的split分割得到的小文件，需拼接使用。
 
-
+# 1. 复现操作
+按照如下操作，即可完全复现B榜提交结果。
 ```
 ## 拼接
 cat daguan* > daguan_test.tar
