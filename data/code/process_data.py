@@ -428,22 +428,14 @@ def get_10w_unlabel2file():
 if __name__ == '__main__':
     # step1.转换数据
     convert_data()
-    # step2.为预训练准备数据
-    split_data() # 划分初始预训练的数据集
+    
+    # step2.为预训练准备数据 => 因为测试阶段用不到，所以注释
+    # split_data() # 划分初始预训练的数据集。
     train_path = "../user_data/data/train.txt"
     test_path = "../user_data/data/test.txt"
     out_path = "../user_data/data/all.txt" # 合并成最后的文件
-    print(">>将train.txt和test.txt合并成一个文件")
-    concat_data(train_path, test_path, out_path)  # 合并得到主要的预训练数据集
-    get_10w_unlabel2file() # 使用unlabel的数据生成10w条预训练的数据
-
-    # step3.为微调准备数据
-    # train_path = "../user_data/temp/train.txt"
-    # rates = [0.34,0.36] # 按照0.34、 0.36 的比例抽取数据    
-    # for rate in rates:
-    #     print(f">>正以rate={rate}的比例采样数据...")
-    #     select_data(train_path,rate)
-
-    print(">>数据增强。将少标签的数据按照“，”重新排列得到新的训练数据")
-    data_augment() # 生成增强数据
-    
+    #print(">>将train.txt和test.txt合并成一个文件")
+    #concat_data(train_path, test_path, out_path)  # 合并得到主要的预训练数据集
+    # get_10w_unlabel2file() # 使用unlabel的数据生成10w条预训练的数据。
+    #print(">>数据增强。将少标签的数据按照“，”重新排列得到新的训练数据")
+    # data_augment() # 生成增强数据。
