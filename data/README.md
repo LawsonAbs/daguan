@@ -1,7 +1,7 @@
 <!--
  * @Author: LawsonAbs
  * @Date: 2021-09-04 22:07:40
- * @LastEditTime: 2021-09-26 14:27:34
+ * @LastEditTime: 2021-09-26 15:51:35
  * @FilePath: /daguan_gitee/data/README.md
 -->
 # 0. 环境要求
@@ -98,5 +98,7 @@ GeForce RTX 2080Ti * 2
 
 # 方案二
 考虑到贵司若坚持需要使用完全的预测模型重跑，则可以按照我在 run.sh 中的脚本中的说明进行相应操作。使用D_0.583_replace 模型生成近似于
-submission_0905_0.583.csv 的结果； 使用D_60_replace,D_100_replace（因为仅使用30个样本训练模型，太少且不合适） 来代替生成 submission_balance_10_num_30.csv 和 submission_balance_10_num_60.csv。 
-本方案肯定不能保证能够完全复现，但是存在比B榜提交结果好的可能（因为训练得到的D_60_replace，以及 D_100_replace 模型使用了较好的预训练模型微调得到）。
+submission_0905_0.583.csv 的结果； 使用D_60_replace,D_90_replace（因为仅使用30个样本训练模型，太少且不合适。所以后续使用了60、90个样本） 来代替生成 submission_balance_10_num_30.csv 和 submission_balance_10_num_60.csv。 
+本方案肯定不能保证能够完全复现，但是存在比B榜提交结果好的可能（因为训练得到的D_60_replace，以及 D_90_replace 模型使用了较好的预训练模型微调得到）。
+
+# 6. 复现操作
