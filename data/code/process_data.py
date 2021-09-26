@@ -278,7 +278,8 @@ def analysis_submission(path):
 
 # 从train.txt中按照类别随机选择数据，使得数据集在类别中达到分布均衡
 # # 除了少数标签的类别外，按照rate 的比率取值
-def select_data(data_path,rate):    
+def select_data_rate(data_path,rate):
+    less_clz_ = ['5-24','8-27','6-20','7-16','8-18','9-23','10-26','3-5'] # 少数目的类别
     less_clz_id = ['0','22','14','12','8','17','4','25']
     select_cont = [] # 被选中的内容
     clz_data = {} # 每个类对应的数据
@@ -290,25 +291,62 @@ def select_data(data_path,rate):
             if label in less_clz_id: # 找出少样本的数据，直接放入
                 for i in range(10): 
                     select_cont.append(row) # 读入数据
-
+                
             else:
                 if label not in clz_data.keys():
                     clz_data[label] = []
                 else:
                     clz_data[label].append(row) # 读入数据
-
+    
+    # random.seed(10) # 设置种子，保持随机一致性  => 这里的一致性没有什么用吧
     for item in clz_data.items():
         label,cont = item # 得到label, cont
         # 使用label 和 cont
         random.shuffle(cont)
-        # print(f"当前正在处理的label文件是:{label}")
-        for i in range(int(len(cont)*rate)):
+        print(f"当前正在处理的label文件是:{label}")
+        num = int(len(cont)*rate)
+        for i in range(num):
             select_cont.append(cont[i]) # 将其放入到选择结果中
 
     random.shuffle(select_cont) # shuffle一下
     rate = str(rate) 
+    out_path = f'/home/lawson/program/daguan/risk_data_grand/data/train_balance_{num}_repeat.txt'
     # 得到一个均衡的样本集合，并写入文件
-    with open(f'../user_data/data/train_balance_{rate}_repeat.txt','w') as f:
+    with open(out_path,'w') as f:
+        for row in select_cont:
+            f.write(row)
+
+
+# 从train.txt中按照类别随机选择数据，使得数据集在类别中达到分布均衡
+# # 除了少数标签的类别外，按照num 取值
+def select_data_num(data_path,num):    
+    select_cont = [] # 被选中的内容
+    clz_data = {} # 每个类对应的数据
+    out_path = f'/home/lawson/program/daguan/risk_data_grand/data/train_balance_{num}.txt'
+    with open(data_path, 'r') as f:
+        for row in f:
+            temp = row.strip("\n").split("\t")            
+            label = temp[2]
+            if label not in clz_data.keys():
+                clz_data[label] = []
+            else:
+                clz_data[label].append(row) # 读入数据
+
+    # random.seed(10) # 设置种子，保持随机一致性  => 这里的一致性没有什么用吧
+    for item in clz_data.items():
+        label,cont = item # 得到label, cont
+        # 使用label 和 cont
+        random.seed(10) # 添加一个随机种子
+        random.shuffle(cont)
+        print(f"当前正在处理的label文件是:{label}")        
+        num = min(num,len(cont))
+        select_cont.extend(cont[0:num]) # 将其放入到选择结果中
+    
+    random.seed(10) # 添加随机种子
+    random.shuffle(select_cont) # shuffle一下    
+    
+    # 得到一个均衡的样本集合，并写入文件
+    with open(out_path,'w') as f:
         for row in select_cont:
             f.write(row)
 
@@ -400,11 +438,11 @@ if __name__ == '__main__':
     get_10w_unlabel2file() # 使用unlabel的数据生成10w条预训练的数据
 
     # step3.为微调准备数据
-    train_path = "../user_data/temp/train.txt"
-    rates = [0.34,0.36] # 按照0.34、 0.36 的比例抽取数据    
-    for rate in rates:
-        print(f">>正以rate={rate}的比例采样数据...")
-        select_data(train_path,rate)
+    # train_path = "../user_data/temp/train.txt"
+    # rates = [0.34,0.36] # 按照0.34、 0.36 的比例抽取数据    
+    # for rate in rates:
+    #     print(f">>正以rate={rate}的比例采样数据...")
+    #     select_data(train_path,rate)
 
     print(">>数据增强。将少标签的数据按照“，”重新排列得到新的训练数据")
     data_augment() # 生成增强数据
