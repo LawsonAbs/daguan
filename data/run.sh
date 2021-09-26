@@ -1,7 +1,7 @@
 ###
  # @Author: LawsonAbs
  # @Date: 2021-09-22 23:32:51
- # @LastEditTime: 2021-09-26 15:32:06
+ # @LastEditTime: 2021-09-26 15:58:01
  # @FilePath: /daguan_gitee/data/run.sh
 ### 
 
@@ -68,7 +68,7 @@ python predict.py --less=True \
 mv submission/submission_balance_10_num_30.csv ../prediction_result/less/
 mv submission/submission_balance_10_num_60.csv ../prediction_result/less/
 # python predict.py --less=True \
-#                 --load_model_path ../user_data/fine_tune_model/less/D_replace_60_less
+#                 --load_model_path ../user_data/fine_tune_model/less/D_replace_60_less \
 #                 --max_seq_len 100
 # python predict.py --less=True \
 #                 --load_model_path ../user_data/fine_tune_model/less/D_replace_90_less \
